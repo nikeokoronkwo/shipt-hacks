@@ -43,6 +43,11 @@ class ShelterAssignmentCreate(APIModel):
 
 
 class DriverInitialize(APIModel):
+    phone_number: str = Field(min_length=1, max_length=32)
+    vehicle_make: str = Field(min_length=1, max_length=80)
+    vehicle_model: str = Field(min_length=1, max_length=80)
+    vehicle_color: str = Field(min_length=1, max_length=40)
+    license_plate: str = Field(min_length=1, max_length=32)
     sms_notifications_enabled: bool = False
 
 
@@ -62,6 +67,10 @@ class DriverOut(APIModel):
     id: int
     auth_user_id: str
     phone_number: str
+    vehicle_make: str
+    vehicle_model: str
+    vehicle_color: str
+    license_plate: str
     is_verified: bool
     is_available: bool
     sms_notifications_enabled: bool

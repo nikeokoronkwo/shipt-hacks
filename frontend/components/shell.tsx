@@ -20,7 +20,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return <div className="flex min-h-screen flex-col">
     <header className="sticky top-0 z-40 border-b border-line bg-background/95 backdrop-blur-xl">
       <div className="container-wide flex h-20 items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-3" aria-label="Wayfinder home"><span className="flex size-10 items-center justify-center rounded-full border border-accent/50 text-accent"><Compass size={25} strokeWidth={1.4} /></span><span className="font-serif text-2xl tracking-tight">Wayfinder<span className="text-accent">.</span></span></Link>
+        <Link href="/" className="flex items-center gap-3" aria-label="Hermes home"><span className="flex size-10 items-center justify-center rounded-full border border-accent/50 text-accent"><Compass size={25} strokeWidth={1.4} /></span><span className="font-serif text-2xl tracking-tight">Hermes<span className="text-accent">.</span></span></Link>
         <nav className="hidden items-center gap-7 lg:flex" aria-label="Main navigation">{links.map(([label, href]) => <Link key={href} href={href} aria-current={path === href ? "page" : undefined} className={`text-sm transition-colors hover:text-accent ${path === href ? "text-accent" : "text-muted"}`}>{label}</Link>)}</nav>
         <div className="flex items-center gap-3">{!isPending && (session ? <><Link href={session.user.role === "driver" ? "/driver-profile" : "/"} className="text-xs text-accent">My account</Link><button onClick={() => authClient.signOut()} className="text-xs text-muted">Sign out</button></> : <Link href="/access" className="text-xs text-accent">Sign in</Link>)}<Link href="/find-shelter" className="btn btn-primary hidden sm:inline-flex">Find a bed <ArrowUpRight size={16} /></Link><button onClick={() => setOpen(!open)} className="rounded-full border border-line p-2.5 lg:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} aria-controls="mobile-nav">{open ? <X size={20} /> : <Menu size={20} />}</button></div>
       </div>
@@ -29,11 +29,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <main id="main-content" className="flex-1">{children}</main>
     <footer className="border-t border-line pt-12">
       <div className="container-wide grid gap-10 pb-12 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
-        <div><Link href="/" className="font-serif text-2xl">Wayfinder.</Link><p className="mt-4 max-w-xs text-sm leading-7 text-muted">A little direction. A safe place to land.<br />Connecting neighbors with shelter and a way there.</p><p className="mt-5 text-xs text-accent">Built for people. Powered by community.</p></div>
+        <div><Link href="/" className="font-serif text-2xl">Hermes.</Link><p className="mt-4 max-w-xs text-sm leading-7 text-muted">A little direction. A safe place to land.<br />Connecting neighbors with shelter and a way there.</p><p className="mt-5 text-xs text-accent">Built for people. Powered by community.</p></div>
         <FooterGroup title="Find your way" links={[["Find shelter", "/find-shelter"], ["Track a ride", "/track-ride"], ["Emergency contacts", "/emergency-contacts"]]} />
         <FooterGroup title="Lend a hand" links={[["Become a driver", "/become-a-driver"], ["Driver dashboard", "/driver-profile"], ["Register a shelter", "/shelter-registration"]]} />
         <FooterGroup title="Stay connected" links={[["Share feedback", "/submit-feedback"], ["How it works", "/#how-it-works"], ["Community resources", "/emergency-contacts"]]} />
-      </div><div className="container-wide flex flex-wrap justify-between gap-3 border-t border-line py-5 text-xs text-muted"><span>© 2026 Wayfinder · ShelterConnect</span><span>Prototype · Not an emergency service. In immediate danger, call 911.</span></div>
+      </div><div className="container-wide flex flex-wrap justify-between gap-3 border-t border-line py-5 text-xs text-muted"><span>© 2026 Hermes</span><span>Prototype · Not an emergency service. In immediate danger, call 911.</span></div>
     </footer>
   </div>;
 }

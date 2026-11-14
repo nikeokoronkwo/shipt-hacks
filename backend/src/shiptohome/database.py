@@ -81,11 +81,14 @@ def initialize_application_tables() -> None:
     # create_all intentionally does not change existing tables. Keep the small
     # application-owned schema upgrade explicit and idempotent.
     driver_columns = {column["name"] for column in inspect(engine).get_columns("drivers")}
-    if "sms_notifications_enabled" not in driver_columns:
-        with engine.begin() as connection:
-            connection.execute(
-                text(
-                    "ALTER TABLE drivers ADD COLUMN "
-                    "sms_notifications_enabled BOOLEAN NOT NULL DEFAULT 0"
-                )
-            )
+    missing_driver_columns = {
+        "sms_notifications_enabled": "BOOLEAN NOT NULL DEFAULT 0",
+        "vehicle_make": "VARCHAR(80) NOT NULL DEFAULT ''",
+        "vehicle_model": "VARCHAR(80) NOT NULL DEFAULT ''",
+        "vehicle_color": "VARCHAR(40) NOT NULL DEFAULT ''",
+        "license_plate": "VARCHAR(32) NOT NULL DEFAULT ''",
+    }
+    with engine.begin() as connection:
+        for column, definition in missing_driver_columns.items():
+            if column not in driver_columns:
+                connection.execute(text(f"ALTER TABLE drivers ADD COLUMN {column} {definition}"))

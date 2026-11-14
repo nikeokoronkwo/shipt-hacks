@@ -30,6 +30,10 @@ export type DriverProfile = {
   is_verified: boolean;
   is_available: boolean;
   sms_notifications_enabled: boolean;
+  vehicle_make: string;
+  vehicle_model: string;
+  vehicle_color: string;
+  license_plate: string;
 };
 
 type ApiOptions = RequestInit & { authenticated?: boolean };
@@ -88,12 +92,19 @@ export function getDriverProfile() {
   return apiFetch<DriverProfile>("/api/drivers/me", { authenticated: true });
 }
 
-export function initializeDriver(sms_notifications_enabled: boolean) {
-  return apiFetch("/api/drivers/me/initialize", {
+export function initializeDriver(payload: {
+  phone_number: string;
+  vehicle_make: string;
+  vehicle_model: string;
+  vehicle_color: string;
+  license_plate: string;
+  sms_notifications_enabled: boolean;
+}) {
+  return apiFetch<DriverProfile>("/api/drivers/me/initialize", {
     method: "POST",
     authenticated: true,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sms_notifications_enabled }),
+    body: JSON.stringify(payload),
   });
 }
 

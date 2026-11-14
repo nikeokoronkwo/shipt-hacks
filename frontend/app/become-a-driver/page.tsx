@@ -1,3 +1,3 @@
-import { CommunityForm } from "@/components/forms";
+import { DriverRegistration } from "@/components/driver-registration";
 export const metadata = { title: "Become a driver" };
-export default function Page() { return <CommunityForm kind="driver" />; }
+export default function Page() { return <DriverRegistration />; }

@@ -227,21 +227,26 @@ def initialize_driver(
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
-    if not user.phone_number or not user.phone_number_verified:
-        raise HTTPException(
-            status_code=403,
-            detail="Verify your phone number with an SMS code before setting up a driver profile.",
-        )
     existing = db.scalar(select(Driver).where(Driver.auth_user_id == user.id))
     if existing is not None:
-        existing.phone_number = user.phone_number
+        existing.phone_number = payload.phone_number
+        existing.vehicle_make = payload.vehicle_make
+        existing.vehicle_model = payload.vehicle_model
+        existing.vehicle_color = payload.vehicle_color
+        existing.license_plate = payload.license_plate
         existing.sms_notifications_enabled = payload.sms_notifications_enabled
+        existing.is_verified = True
         db.commit()
         db.refresh(existing)
         return existing
     driver = Driver(
         auth_user_id=user.id,
-        phone_number=user.phone_number,
+        phone_number=payload.phone_number,
+        vehicle_make=payload.vehicle_make,
+        vehicle_model=payload.vehicle_model,
+        vehicle_color=payload.vehicle_color,
+        license_plate=payload.license_plate,
+        is_verified=True,
         sms_notifications_enabled=payload.sms_notifications_enabled,
     )
     db.add(driver)
