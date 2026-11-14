@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.database import engine, init_db
+from app.shelters.router import router as shelter_router
 from app.auth.dependencies import CurrentUser, get_current_user
 from app.driver_service import DriverWorkflowError
 from app.drivers import router as driver_router
@@ -25,6 +26,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="ShelterConnect API", lifespan=lifespan)
 app.include_router(driver_router)
 app.include_router(ride_router)
+app.include_router(shelter_router)
 
 
 @app.exception_handler(DriverWorkflowError)

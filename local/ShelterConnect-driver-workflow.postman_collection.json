@@ -1,0 +1,275 @@
+{
+  "info": {
+    "name": "ShelterConnect — Driver Workflow",
+    "description": "Driver-side API from specs/gavin-work-spec.md. Start the Better Auth service on auth_base_url (default http://localhost:3001) and the backend on base_url. Set name, email, and password locally (prefer a private Postman environment); password must meet Better Auth requirements (at least 8 characters by default). Run Register for a new account OR Login for an existing account, then Get driver JWT. Keep the Postman cookie jar enabled: the auth requests use the session cookie, not a Bearer token. Get driver JWT saves driver_token as a collection variable for backend requests (remove any environment-level driver_token override). Tokens expire after 15 minutes; rerun Get driver JWT to refresh while the session is active. Do not sync/export populated password or token values; clear them before sharing. Set vehicle_make, vehicle_model, vehicle_color, and vehicle_license_plate, then initialize the profile to register the vehicle. New driver profiles are verified automatically and start offline. Existing profiles keep their current verification. Go online and poll every 3–5 seconds. Use Create ride request with an existing shelter_id that reports available beds. Creation saves ride_id and a private ride_tracking_token; keep the token local. Creation does not reserve a bed or confirm admission. Private status lookup is not implemented yet. Polling selects the first pending ride only if ride_id is empty; override ride_id to choose a different request. Accept/start/complete mutate real database state. A reported shelter bed is not a reservation or confirmed admission. OpenAPI at /openapi.json is the source of endpoint schemas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{driver_token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string", "description": "DEFAULT: Backend URL; change only if using another port/host." },
+    { "key": "auth_base_url", "value": "http://localhost:3001", "type": "string", "description": "DEFAULT: Better Auth service URL." },
+    { "key": "auth_origin", "value": "http://localhost:5173", "type": "string", "description": "DEFAULT: Must match a TRUSTED_ORIGINS value in auth/.env." },
+    { "key": "name", "value": "Demo Driver", "type": "string", "description": "FILL IN: Your display name for registration." },
+    { "key": "email", "value": "", "type": "string", "description": "REQUIRED: Your email for registration and login." },
+    { "key": "password", "value": "", "type": "string", "description": "REQUIRED: A strong password, at least 8 characters. Keep local/private; do not export or sync." },
+    { "key": "driver_token", "value": "", "type": "string", "description": "AUTOMATIC: Get driver JWT populates this. Leave blank initially; do not add an environment override." },
+    { "key": "phone_number", "value": "2055550100", "type": "string", "description": "FILL IN: Driver phone number as a string for profile initialization." },
+    { "key": "updated_phone_number", "value": "2055550123", "type": "string", "description": "OPTIONAL: Replacement phone number for the update-profile request." },
+    { "key": "ride_id", "value": "", "type": "string", "description": "AUTOMATIC: Polling selects the first pending ride when blank. Clear before selecting another ride, or enter an ID manually." },
+    { "key": "shelter_id", "value": "1", "type": "string", "description": "FILL IN: Existing destination shelter ID with reported available beds." },
+    { "key": "rider_first_name", "value": "Demo", "type": "string", "description": "FILL IN: Requester's first name." },
+    { "key": "rider_last_name", "value": "Rider", "type": "string", "description": "FILL IN: Requester's last name." },
+    { "key": "pickup_latitude", "value": "33.5207", "type": "string", "description": "FILL IN: Pickup latitude. Frontend obtains this through browser geolocation permission; Postman uses a manually set test value." },
+    { "key": "pickup_longitude", "value": "-86.8025", "type": "string", "description": "FILL IN: Pickup longitude. Send with latitude; no address is required." },
+    { "key": "ride_tracking_token", "value": "", "type": "string", "description": "AUTOMATIC: Private token saved after ride creation. Keep local; do not share or export." },
+    { "key": "vehicle_make", "value": "Toyota", "type": "string", "description": "FILL IN: Vehicle manufacturer." },
+    { "key": "vehicle_model", "value": "Camry", "type": "string", "description": "FILL IN: Vehicle model." },
+    { "key": "vehicle_color", "value": "Blue", "type": "string", "description": "FILL IN: Vehicle color." },
+    { "key": "vehicle_license_plate", "value": "001-ABC", "type": "string", "description": "FILL IN: License plate as a string; preserve leading zeros." }
+  ],
+  "item": [
+    {
+      "name": "Authentication — register OR login, then get JWT",
+      "description": "Uses the existing Better Auth service, not FastAPI. Start it from auth/ (see auth/README.md). auth_origin must match a configured TRUSTED_ORIGINS value. Keep cookies enabled and use the same auth_base_url host for all requests. Register is for new accounts only; skip it for existing accounts (duplicate registration is an error).",
+      "item": [
+        {
+          "name": "Register driver account (new account only)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Origin", "value": "{{auth_origin}}" }
+            ],
+            "url": "{{auth_base_url}}/api/auth/sign-up/email",
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "description": "Creates an account with the driver role through Better Auth. No client-supplied role. The pre-request script builds the JSON from name/email/password, safely escaping special characters. Successful registration starts a cookie session; next run Get driver JWT. It does NOT initialize the separate application driver profile. Duplicate emails are rejected."
+          },
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "pm.collectionVariables.set('driver_token', '');",
+              "pm.request.body.update(JSON.stringify({name: pm.variables.get('name'), email: pm.variables.get('email'), password: pm.variables.get('password')}));"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('Driver account registered', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().user.role).to.eql('driver'); });"
+            ] } }
+          ]
+        },
+        {
+          "name": "Login (existing account)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Origin", "value": "{{auth_origin}}" }
+            ],
+            "url": "{{auth_base_url}}/api/auth/sign-in/email",
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "description": "Logs in using email/password variables and stores the session cookie in Postman's cookie jar. Next run Get driver JWT. Invalid credentials return 401. The account must have the driver role to use the driver endpoints."
+          },
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "pm.collectionVariables.set('driver_token', '');",
+              "pm.request.body.update(JSON.stringify({email: pm.variables.get('email'), password: pm.variables.get('password')}));"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('Driver logged in', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().user.role).to.eql('driver'); });"
+            ] } }
+          ]
+        },
+        {
+          "name": "Get driver JWT (after register or login)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Origin", "value": "{{auth_origin}}" }],
+            "url": "{{auth_base_url}}/api/auth/token",
+            "description": "Uses the session cookie from registration/login. Saves the returned JWT to driver_token for all backend requests. No need to copy the cookie session token into the Bearer field: they are different tokens. Returns 401 without a valid session. JWT expires after 15 minutes."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.collectionVariables.set('driver_token', '');",
+            "pm.test('JWT issued', () => pm.response.to.have.status(200));",
+            "if (pm.response.code === 200) {",
+            "  const token = pm.response.json().token;",
+            "  pm.test('JWT returned', () => { pm.expect(token).to.be.a('string').and.not.empty; pm.expect(token.split('.')).to.have.lengthOf(3); });",
+            "  if (typeof token === 'string' && token.split('.').length === 3) pm.collectionVariables.set('driver_token', token);",
+            "}"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Driver profile",
+      "item": [
+        {
+          "name": "1. Register driver profile and vehicle (idempotent)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"phone_number\": \"{{phone_number}}\",\n  \"vehicle\": {\n    \"make\": \"{{vehicle_make}}\",\n    \"model\": \"{{vehicle_model}}\",\n    \"color\": \"{{vehicle_color}}\",\n    \"license_plate\": \"{{vehicle_license_plate}}\"\n  }\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/api/drivers/me/initialize",
+            "description": "Completes driver signup by atomically registering the profile and required vehicle (make, model, color, license_plate). New profiles are verified/offline by default. Identity comes from the JWT, not request data. Retries preserve existing profile and vehicle values; existing profiles without a vehicle gain one. Phone and all vehicle fields must be nonblank strings. 401 missing/invalid token; 403 wrong role; 422 invalid body. Account registration in Better Auth is a separate first step."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Profile initialized', () => pm.response.to.have.status(200));",
+            "if (pm.response.code === 200) {",
+            "  const profile = pm.response.json();",
+            "  pm.test('Profile contract', () => { pm.expect(profile.id).to.be.a('number'); pm.expect(profile.phone_number).to.be.a('string'); pm.expect(profile.is_verified).to.be.a('boolean'); pm.expect(profile.is_available).to.be.a('boolean'); });",
+            "  pm.test('Vehicle registered', () => { pm.expect(profile.vehicle).to.be.an('object'); ['make', 'model', 'color', 'license_plate'].forEach(key => pm.expect(profile.vehicle[key]).to.be.a('string').and.not.empty); });",
+            "}"
+          ] } }]
+        },
+        {
+          "name": "2. Get my profile",
+          "request": {
+            "method": "GET", "header": [], "url": "{{base_url}}/api/drivers/me",
+            "description": "Returns only the authenticated driver's profile. 404 if not initialized."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Profile returned', () => pm.response.to.have.status(200));"
+          ] } }]
+        },
+        {
+          "name": "3. Update phone number",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"phone_number\": \"{{updated_phone_number}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/api/drivers/me",
+            "description": "Only accepts a nonblank string phone_number. Verification, availability, identity, and unknown fields are rejected (422)."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Phone updated', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().phone_number).to.eql(pm.variables.get('updated_phone_number').trim()); });"
+          ] } }]
+        },
+        {
+          "name": "4. Go online",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"is_available\": true\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/api/drivers/me/availability",
+            "description": "New driver profiles are verified automatically; existing unverified profiles still return 403. Set is_available to false to go offline. Going offline does not cancel an active ride or prevent completing it. Requires an actual JSON boolean."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Driver online', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().is_available).to.eql(true); });"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Create a ride (anonymous)",
+      "item": [
+        {
+          "name": "Create ride request",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"{{rider_first_name}}\",\n  \"last_name\": \"{{rider_last_name}}\",\n  \"pickup_latitude\": {{pickup_latitude}},\n  \"pickup_longitude\": {{pickup_longitude}},\n  \"shelter_id\": {{shelter_id}}\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/api/rides",
+            "description": "Anonymous: no Bearer token or account needed. Requires nonblank names, pickup_latitude/pickup_longitude, and an existing shelter with reported available beds. No address is needed. The frontend should ask for browser geolocation permission and send the resulting numeric coordinates; Postman cannot show that browser prompt, so set test coordinates in variables. Coordinates must be supplied together and within valid ranges. An address-only fallback is also supported by the API. Returns 201 with a private tracking token once; only its hash is stored. 404 shelter not found; 409 no reported beds; 422 invalid input. Saves ride_id for acceptance and ride_tracking_token locally. Every successful send creates a new ride. No bed reservation or confirmed admission. No SMS is sent. Tracking lookup is not yet implemented."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Ride created', () => pm.response.to.have.status(201));",
+            "if (pm.response.code === 201) {",
+            "  const ride = pm.response.json();",
+            "  pm.test('Pending ride with private token', () => { pm.expect(ride.id).to.be.a('number'); pm.expect(ride.status).to.eql('PENDING'); pm.expect(ride.tracking_token).to.be.a('string').and.not.empty; pm.expect(ride).not.to.have.property('tracking_token_hash'); });",
+            "  pm.collectionVariables.set('ride_id', String(ride.id));",
+            "  pm.collectionVariables.set('ride_tracking_token', ride.tracking_token);",
+            "}"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Transportation",
+      "item": [
+        {
+          "name": "5. Poll pending requests",
+          "request": {
+            "method": "GET", "header": [], "url": "{{base_url}}/api/drivers/requests",
+            "description": "Poll every 3–5 seconds. Verified, online drivers only (otherwise 403). Returns [] while the driver has an active ride. Response omits names, precise pickup data, and tracking hashes. Coordinates are summarized as a coarse grid; free-form address details are withheld until assignment. Automatically selects the first request if ride_id is blank."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Pending list returned', () => pm.response.to.have.status(200));",
+            "if (pm.response.code === 200) {",
+            "  const rides = pm.response.json();",
+            "  pm.test('Pending list is privacy-safe', () => { pm.expect(rides).to.be.an('array'); rides.forEach(ride => { pm.expect(ride.status).to.eql('PENDING'); ['first_name', 'last_name', 'pickup_address', 'pickup_latitude', 'pickup_longitude', 'tracking_token_hash'].forEach(key => pm.expect(ride).not.to.have.property(key)); }); });",
+            "  if (!pm.variables.get('ride_id') && rides.length) pm.collectionVariables.set('ride_id', String(rides[0].id));",
+            "}"
+          ] } }]
+        },
+        {
+          "name": "6. Recover my active ride",
+          "request": {
+            "method": "GET", "header": [], "url": "{{base_url}}/api/drivers/me/active-ride",
+            "description": "Returns the driver's ACCEPTED/IN_PROGRESS ride, or null. Supports page reloads. Works while offline. Contains assignment-only pickup details; never a tracking token/hash."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Active ride lookup succeeded', () => pm.response.to.have.status(200));",
+            "if (pm.response.code === 200) { const ride = pm.response.json(); if (ride) { pm.test('Active state', () => pm.expect(['ACCEPTED', 'IN_PROGRESS']).to.include(ride.status)); } }"
+          ] } }]
+        },
+        {
+          "name": "7. Accept ride",
+          "request": {
+            "method": "POST", "header": [], "url": "{{base_url}}/api/rides/{{ride_id}}/accept",
+            "description": "Requires a verified, online driver without an active ride. Identity is taken from the JWT, not a supplied driver_id. Atomically assigns a pending ride and sets accepted_at. 404 missing ride/profile; 403 ineligible; 409 unavailable ride or driver already has an active ride. Non-idempotent: retry after success returns 409."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Ride accepted', () => { pm.response.to.have.status(200); const ride = pm.response.json(); pm.expect(ride.id).to.eql(Number(pm.variables.get('ride_id'))); pm.expect(ride.status).to.eql('ACCEPTED'); pm.expect(ride.accepted_at).to.be.a('string'); pm.expect(ride).not.to.have.property('tracking_token_hash'); });"
+          ] } }]
+        },
+        {
+          "name": "8. Start ride",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/api/rides/{{ride_id}}/status",
+            "description": "Assigned driver only (403 otherwise). ACCEPTED → IN_PROGRESS. Invalid/repeated transitions return 409. Alternatively send CANCELLED while ACCEPTED to cancel; cancellation is not allowed once IN_PROGRESS."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Ride in progress', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('IN_PROGRESS'); });"
+          ] } }]
+        },
+        {
+          "name": "9. Complete ride",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"COMPLETED\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/api/rides/{{ride_id}}/status",
+            "description": "Assigned driver only. IN_PROGRESS → COMPLETED; sets completed_at and frees the driver for another assignment. Invalid/repeated transitions return 409. Clear ride_id before selecting the next request."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Ride completed', () => { pm.response.to.have.status(200); const ride = pm.response.json(); pm.expect(ride.status).to.eql('COMPLETED'); pm.expect(ride.completed_at).to.be.a('string'); });"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Availability controls",
+      "item": [
+        {
+          "name": "Go offline",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"is_available\": false\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/api/drivers/me/availability",
+            "description": "Takes the authenticated driver offline. Repeat safely. Stops eligibility for new requests but does not cancel an active ride; the assigned driver can still start or complete it. To come back online, run Go online in the Driver profile folder."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Driver offline', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().is_available).to.eql(false); });"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}

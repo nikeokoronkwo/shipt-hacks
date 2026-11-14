@@ -1,5 +1,6 @@
 """Run from backend: .venv/bin/python tests/smoke_auth.py."""
 import os
+import sqlite3
 from pathlib import Path
 import subprocess
 import tempfile
@@ -88,7 +89,32 @@ def run():
                 assert post('sign-in/email', {'email': 'driver@example.com', 'password': 'DriverPassword-12345'}).status_code == 200
                 changed_token = client.get('/api/auth/token').json()['token']
                 assert httpx.get(f'{API}/api/me', headers={'Authorization': f'Bearer {changed_token}'}).json()['role'] == 'shelter_admin'
-            print('PASS: signup, escalation rejection, sessions, JWT/FastAPI, restart persistence, logout, login, admin operations')
+                with sqlite3.connect(f'{tmp}/test.db') as db:
+                    db.executemany("INSERT INTO shelters (name, address, total_beds, available_beds, updated_at) VALUES (?, ?, 10, 5, ?)",
+                        [('Demo One', 'Fictional site', '2026-11-14T00:00:00+00:00'),
+                         ('Demo Two', 'Fictional site', '2026-11-14T00:00:00+00:00')])
+                assert len(httpx.get(f'{API}/api/shelters').json()) == 2
+                shelter_headers = {'Authorization': f'Bearer {changed_token}'}
+                assert httpx.patch(f'{API}/api/shelters/1', headers=shelter_headers, json={'available_beds': 4}).status_code == 403
+                assert post('sign-out', {}).status_code == 200
+                assert post('sign-in/email', {'email': env['ADMIN_EMAIL'], 'password': env['ADMIN_PASSWORD']}).status_code == 200
+                super_token = client.get('/api/auth/token').json()['token']
+                super_headers = {'Authorization': f'Bearer {super_token}'}
+                assignment = {'auth_user_id': user_id, 'shelter_id': 1}
+                assert httpx.post(f'{API}/api/admin/shelter-assignments', headers=super_headers, json=assignment).status_code == 201
+                assert httpx.post(f'{API}/api/admin/shelter-assignments', headers=super_headers, json=assignment).status_code == 409
+                assert len(httpx.get(f'{API}/api/admin/shelters', headers=shelter_headers).json()) == 1
+                assert len(httpx.get(f'{API}/api/admin/shelters', headers=super_headers).json()) == 2
+                updated = httpx.patch(f'{API}/api/shelters/1', headers=shelter_headers,
+                    json={'available_beds': 4, 'food_available': True, 'services': ['Meals']})
+                assert updated.status_code == 200, updated.text
+                assert updated.json()['services'] == ['Meals']
+                assert httpx.get(f'{API}/api/shelters/1').json()['food_available'] is True
+                assert httpx.patch(f'{API}/api/shelters/2', headers=shelter_headers, json={}).status_code == 403
+                assert httpx.patch(f'{API}/api/shelters/2', headers=super_headers, json={'available_beds': 11}).status_code == 422
+                assert httpx.patch(f'{API}/api/shelters/2', headers=super_headers, json={'available_beds': 0}).status_code == 200
+
+            print('PASS: signup, escalation rejection, sessions, JWT/FastAPI, restart persistence, logout, login, admin operations, shelter endpoints and assignments')
         finally:
             for process in reversed(processes):
                 if process.poll() is None:
