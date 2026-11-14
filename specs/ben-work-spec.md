@@ -1,6 +1,10 @@
 
 # Backend Developer 1 — Authentication, Authorization & Shelter Management
 
+> Historical record of Ben's separate auth-service implementation on `main`.
+> The current integrated implementation is in `frontend/` and
+> `backend/src/shiptohome/`; see the root [README](../README.md).
+
 ## 1. Overview
 
 **Project:** ShelterConnect — ShiptHacks  
@@ -372,28 +376,57 @@ The frontend must complete authentication before initializing the driver profile
 
 ## 9. Acceptance Criteria
 
-- [ ] Better Auth service runs.
-- [ ] Email/password registration works.
-- [ ] Login/logout works.
-- [ ] Better Auth sessions persist.
-- [ ] Roles are configured.
-- [ ] Public users cannot create administrator accounts.
-- [ ] FastAPI verifies Better Auth JWTs.
-- [ ] Invalid JWTs return 401.
-- [ ] Insufficient permissions return 403.
-- [ ] Reusable role dependencies are implemented.
-- [ ] SQLite database initializes successfully.
-- [ ] Shelter listing endpoint works.
-- [ ] Shelter detail endpoint works.
-- [ ] Shelter administrators can update assigned shelters.
-- [ ] Shelter administrators cannot update unassigned shelters.
-- [ ] Super administrators can update all shelters.
-- [ ] Food availability can be updated.
-- [ ] Bed count validation works.
-- [ ] Demo shelters are seeded.
+- [x] Better Auth service runs.
+- [x] Email/password registration works.
+- [x] Login/logout works.
+- [x] Better Auth sessions persist.
+- [x] Roles are configured.
+- [x] Public users cannot create administrator accounts.
+- [x] FastAPI verifies Better Auth JWTs.
+- [x] Invalid JWTs return 401.
+- [x] Insufficient permissions return 403.
+- [x] Reusable role dependencies are implemented.
+- [x] SQLite database initializes successfully.
+- [x] Shelter listing endpoint works.
+- [x] Shelter detail endpoint works.
+- [x] Shelter administrators can update assigned shelters.
+- [x] Shelter administrators cannot update unassigned shelters.
+- [x] Super administrators can update all shelters.
+- [x] Food availability can be updated.
+- [x] Bed count validation works.
+- [x] Demo shelters are seeded.
 
 ## 10. Definition of Done
 
 Developer 1 is finished when authentication works, role checks are enforced by FastAPI, shelter data is available through public endpoints, and authorized administrators can update their shelters.
 
 The shared authentication dependencies and database interfaces must be usable by Developer 2 without modifications.
+
+## 11. Iteration 1 Progress — Backend Authentication
+
+Scope approved by Ben: authentication service, trusted roles, FastAPI JWT validation, and verification/documentation. Shelter APIs and domain models remain for a later iteration.
+
+- [x] Better Auth service and SQLite auth migrations.
+- [x] Trusted driver signup and protected administrator role management.
+- [x] JWT issuance and reusable FastAPI authentication/role dependencies (15 JWT/role tests passing).
+- [x] End-to-end verification and startup documentation.
+
+Implementation started 2026-11-14. Detailed execution record: [backend authentication](spec-backend-authentication.md).
+
+Verification: TypeScript type check passed; 15 Python JWT/role tests passed; real HTTP smoke test passed using a temporary SQLite database. Confirmed role injection rejection, protected admin operations, JWT access to FastAPI, session persistence across restart, and login/logout. Setup: [auth README](../auth/README.md) and [backend README](../backend/README.md).
+
+MVP limitation: issued JWTs remain valid for up to 15 minutes after logout or a role change. Shelter data, shelter permissions/assignments, driver profiles, and transportation endpoints are not part of iteration 1.
+
+
+## 12. Iteration 2 Progress — Shelter Management
+
+- [x] Public shelter listing and detail endpoints.
+- [x] Assigned-shelter updates and super administrator access, with strict capacity/boolean/service validation and UTC timestamps.
+- [x] Administrator shelter listing and super administrator assignment creation, including target role/reference validation and duplicate handling.
+- [x] Stable `app.shelters.models.Shelter` import for Developer 2.
+- [x] Repeatable local demo provisioning: four fictional Birmingham shelters, generated Better Auth super/shelter administrators, and one assignment.
+- [x] Local SQLite initialized and seeded; database, credentials, and environment files excluded from future commits.
+
+Completed 2026-11-14. Backend suite: 44 tests passed plus 53 subtests; auth TypeScript check passed. Real HTTP smoke verification covers Better Auth login/JWT issuance, both administrator roles, assignments, shelter reads/updates, forbidden access, and capacity errors. See [execution record](spec-shelter-management.md), [backend setup](../backend/README.md), and [demo account setup](../auth/README.md).
+
+Driver profiles and transportation endpoints remain Developer 2's responsibility.

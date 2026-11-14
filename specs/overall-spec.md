@@ -1,5 +1,10 @@
 # ShelterConnect — Authentication & Authorization Specification
 
+> Historical planning document. The current implementation hosts Better Auth
+> in the Next.js frontend at port 3000 and shares SQLite with FastAPI; the
+> original separate auth-service plan below is superseded. See the root
+> [README](../README.md) and [unified auth spec](spec-backend-authentication.md).
+
 ## 1. Authentication Technology
 
 **Authentication Provider:** Better Auth  
