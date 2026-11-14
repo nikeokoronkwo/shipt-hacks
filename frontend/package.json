@@ -7,28 +7,34 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
     "auth:migrate": "tsx scripts/migrate-auth.ts",
     "auth:bootstrap-admin": "tsx scripts/bootstrap-admin.ts"
   },
   "dependencies": {
-    "better-auth": "^1.7.24",
-    "better-sqlite3": "^13.2.0",
+    "lucide-react": "^1.73.0",
+    "mapbox-gl": "^3.35.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "better-auth": "^1.7.24",
+    "better-sqlite3": "^13.2.0"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "4.3.3",
-    "@types/better-sqlite3": "^9.6.0",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "prettier": "^3.10.1",
     "tailwindcss": "4.3.3",
-    "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/better-sqlite3": "^9.6.0",
+    "babel-plugin-react-compiler": "1.0.0",
+    "tsx": "^4.23.15"
   },
   "packageManager": "pnpm@10.29.3",
   "pnpm": {

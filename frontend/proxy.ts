@@ -8,7 +8,7 @@ export async function proxy(request: NextRequest) {
     })
 
     if(!session) {
-        return NextResponse.redirect(new URL("/#driver-access", request.url));
+        return NextResponse.redirect(new URL("/access#driver-access", request.url));
     }
 
     return NextResponse.next();
