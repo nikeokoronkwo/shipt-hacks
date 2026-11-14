@@ -1,4 +1,4 @@
-# ShelterConnect API
+# Hermes API
 
 FastAPI owns shelters, driver profiles, and transportation requests. It does
 not store passwords, sessions, or Better Auth users. The active auth contract
