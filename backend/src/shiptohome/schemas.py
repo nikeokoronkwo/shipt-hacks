@@ -1,9 +1,18 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 
 class APIModel(BaseModel):
@@ -31,31 +40,68 @@ class ShelterOut(APIModel):
 
 
 class ShelterUpdate(APIModel):
-    total_beds: int | None = Field(default=None, ge=0)
-    available_beds: int | None = Field(default=None, ge=0)
-    food_available: bool | None = None
-    services: list[str] | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    total_beds: Annotated[StrictInt, Field(ge=0, le=2**63 - 1)] | None = None
+    available_beds: Annotated[StrictInt, Field(ge=0, le=2**63 - 1)] | None = None
+    food_available: StrictBool | None = None
+    services: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]] | None = None
+
+    @field_validator("total_beds", "available_beds", "food_available", "services", mode="before")
+    @classmethod
+    def reject_explicit_null(cls, value: object) -> object:
+        if value is None:
+            raise ValueError("Updated values cannot be null")
+        return value
 
 
 class ShelterAssignmentCreate(APIModel):
-    auth_user_id: str = Field(min_length=1, max_length=64)
-    shelter_id: int = Field(gt=0)
+    model_config = ConfigDict(extra="forbid")
+
+    auth_user_id: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
+    shelter_id: Annotated[StrictInt, Field(gt=0, le=2**63 - 1)]
+
+
+class VehicleInput(APIModel):
+    model_config = ConfigDict(extra="forbid")
+
+    make: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100, strict=True)]
+    model: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100, strict=True)]
+    color: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80, strict=True)]
+    license_plate: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40, strict=True)]
 
 
 class DriverInitialize(APIModel):
-    sms_notifications_enabled: bool = False
+    model_config = ConfigDict(extra="forbid")
+
+    sms_notifications_enabled: bool = Field(default=False, strict=True)
+    vehicle: VehicleInput
 
 
 class DriverUpdate(APIModel):
-    sms_notifications_enabled: bool
+    model_config = ConfigDict(extra="forbid")
+
+    sms_notifications_enabled: bool = Field(strict=True)
 
 
 class DriverAvailabilityUpdate(APIModel):
-    is_available: bool
+    model_config = ConfigDict(extra="forbid")
+
+    is_available: bool = Field(strict=True)
 
 
 class DriverVerificationUpdate(APIModel):
-    is_verified: bool
+    model_config = ConfigDict(extra="forbid")
+
+    is_verified: bool = Field(strict=True)
+
+
+class VehicleOut(APIModel):
+    id: int
+    make: str
+    model: str
+    color: str
+    license_plate: str
 
 
 class DriverOut(APIModel):
@@ -65,15 +111,18 @@ class DriverOut(APIModel):
     is_verified: bool
     is_available: bool
     sms_notifications_enabled: bool
+    vehicle: VehicleOut | None = None
 
 
 class RideCreate(APIModel):
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-    pickup_latitude: float | None = None
-    pickup_longitude: float | None = None
-    pickup_address: str | None = Field(default=None, max_length=400)
-    shelter_id: int = Field(gt=0)
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: str = Field(min_length=1, max_length=100, strict=True)
+    last_name: str = Field(min_length=1, max_length=100, strict=True)
+    pickup_latitude: float | None = Field(default=None, ge=-90, le=90, strict=True)
+    pickup_longitude: float | None = Field(default=None, ge=-180, le=180, strict=True)
+    pickup_address: str | None = Field(default=None, max_length=400, strict=True)
+    shelter_id: Annotated[StrictInt, Field(gt=0, le=2**63 - 1)]
 
     @model_validator(mode="after")
     def validate_pickup_location(self) -> "RideCreate":
@@ -124,4 +173,8 @@ class RideAssignedOut(APIModel):
 
 
 class RideStatusUpdate(APIModel):
-    status: Literal["IN_PROGRESS", "COMPLETED", "CANCELLED"]
+    model_config = ConfigDict(extra="forbid")
+
+    # Treat unknown or disallowed transitions as workflow conflicts (409),
+    # rather than request-shape errors (422).
+    status: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20, strict=True)]

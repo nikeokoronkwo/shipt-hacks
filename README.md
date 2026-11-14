@@ -18,7 +18,9 @@ Better Auth's JWKS endpoint; it never reads passwords or session cookies.
 Drivers can sign up or sign in with an SMS one-time code, or use email and
 password then verify a phone number. FastAPI accepts a driver's phone only from
 the signed, phone-verified token. Drivers must opt in to receive new-ride SMS
-alerts.
+alerts. Driver setup also records one vehicle, and a driver must be verified,
+phone-verified, and have that vehicle registered before going online. A phone
+change resets online status and SMS consent for the new number.
 
 ## Local setup
 
@@ -66,7 +68,7 @@ The boundary is intentional:
 | Owner | Tables / responsibility |
 | --- | --- |
 | Better Auth / Next | `user`, `session`, `account`, `verification`, `jwks`; passwords, sessions, roles, JWT signing |
-| SQLAlchemy / FastAPI | `shelters`, `shelter_admins`, `drivers`, `ride_requests`; business data and authorization |
+| SQLAlchemy / FastAPI | `shelters`, `shelter_admins`, `drivers`, `cars`, `ride_requests`; business data and authorization |
 
 Never run SQLAlchemy migrations against Better Auth tables or use Node to alter
 application tables. Both connections enable WAL mode, foreign keys, and a

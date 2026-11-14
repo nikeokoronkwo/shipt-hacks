@@ -8,16 +8,17 @@ import secrets
 from collections.abc import Generator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from math import floor
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import Select, select, text, update
+from sqlalchemy import Select, inspect, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, joinedload
 
 from shiptohome.auth import get_current_user, require_role
 from shiptohome.database import SessionLocal, get_db, initialize_application_tables
-from shiptohome.models import Driver, RideRequest, Shelter, ShelterAdmin
+from shiptohome.models import Car, Driver, RideRequest, Shelter, ShelterAdmin
 from shiptohome.schemas import (
     CurrentUser,
     DriverAvailabilityUpdate,
@@ -34,6 +35,7 @@ from shiptohome.schemas import (
     ShelterAssignmentCreate,
     ShelterOut,
     ShelterUpdate,
+    VehicleInput,
 )
 from shiptohome.seed import seed_demo_shelters
 from shiptohome.sms import send_sms
@@ -85,25 +87,68 @@ def get_driver_or_404(db: Session, auth_user_id: str) -> Driver:
 
 def require_eligible_driver(db: Session, user: CurrentUser) -> Driver:
     driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
     if not driver.is_verified:
         raise HTTPException(status_code=403, detail="Your driver profile has not been verified.")
     if not driver.is_available:
         raise HTTPException(status_code=403, detail="Set yourself online before viewing requests.")
+    if driver.vehicle is None:
+        raise HTTPException(status_code=403, detail="Register a vehicle before viewing ride requests.")
     return driver
+
+
+def require_verified_driver_phone(db: Session, driver: Driver, user: CurrentUser) -> None:
+    """Keep application contact/consent aligned with Better Auth's verified phone."""
+    if not user.phone_number or not user.phone_number_verified:
+        changed = driver.is_available or driver.sms_notifications_enabled
+        driver.is_available = False
+        driver.sms_notifications_enabled = False
+        if changed:
+            db.commit()
+        raise HTTPException(
+            status_code=403,
+            detail="Verify your phone number before using driver tools.",
+        )
+
+    if driver.phone_number != user.phone_number:
+        # A newly verified number does not inherit the old number's SMS consent
+        # or active status. The driver must confirm settings for this number.
+        driver.phone_number = user.phone_number
+        driver.sms_notifications_enabled = False
+        driver.is_available = False
+        db.commit()
+        raise HTTPException(
+            status_code=409,
+            detail="Your verified phone changed. Review SMS consent and go online again.",
+        )
 
 
 def notify_available_drivers(shelter_name: str) -> None:
     """Send a minimal alert only to verified, online, opted-in drivers."""
     with SessionLocal() as db:
-        phone_numbers = db.scalars(
-            select(Driver.phone_number).where(
-                Driver.is_verified.is_(True),
-                Driver.is_available.is_(True),
-                Driver.sms_notifications_enabled.is_(True),
-                ~Driver.rides.any(RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS"))),
+        # The auth table owns the live phone and verification flag. Compare it
+        # with the app profile so a changed/unverified number never receives a
+        # notification through a stale driver row.
+        if not inspect(db.connection()).has_table("user"):
+            return
+        auth_columns = {column["name"] for column in inspect(db.connection()).get_columns("user")}
+        if not {"phoneNumber", "phoneNumberVerified", "role"}.issubset(auth_columns):
+            return
+        rows = db.execute(
+            text(
+                'SELECT d.phone_number FROM drivers AS d '
+                'JOIN "user" AS u ON u.id = d.auth_user_id '
+                'WHERE d.is_verified = 1 AND d.is_available = 1 '
+                'AND d.sms_notifications_enabled = 1 '
+                'AND EXISTS (SELECT 1 FROM cars AS c WHERE c.driver_id = d.id) '
+                'AND u.role = \'driver\' AND u."phoneNumberVerified" = 1 '
+                'AND u."phoneNumber" = d.phone_number '
+                'AND NOT EXISTS ('
+                'SELECT 1 FROM ride_requests AS r WHERE r.driver_id = d.id '
+                "AND r.status IN ('ACCEPTED', 'IN_PROGRESS'))"
             )
         )
-        recipients = list(phone_numbers)
+        recipients = [row[0] for row in rows]
 
     message = (
         f"ShelterConnect: A ride request is available for {shelter_name}. "
@@ -138,6 +183,18 @@ def public_ride(ride: RideRequest) -> RidePublicOut:
     )
 
 
+def pickup_area(ride: RideRequest) -> str:
+    """Return a coarse pickup hint without disclosing address or exact coordinates."""
+    if ride.pickup_latitude is not None and ride.pickup_longitude is not None:
+        latitude = floor(ride.pickup_latitude * 10) / 10
+        longitude = floor(ride.pickup_longitude * 10) / 10
+        return (
+            f"Area {latitude:.1f} to {latitude + 0.1:.1f} latitude, "
+            f"{longitude:.1f} to {longitude + 0.1:.1f} longitude"
+        )
+    return "Address pickup (location details available after acceptance)"
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -160,31 +217,34 @@ def update_shelter(
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_role("shelter_admin", "super_admin")),
 ) -> Shelter:
-    shelter = get_shelter_or_404(db, shelter_id)
-    if user.role == "shelter_admin":
-        assignment = db.scalar(
-            select(ShelterAdmin.id).where(
-                ShelterAdmin.auth_user_id == user.id,
-                ShelterAdmin.shelter_id == shelter_id,
+    # Serialize capacity checks and writes across SQLite connections.
+    db.execute(text("BEGIN IMMEDIATE"))
+    try:
+        shelter = get_shelter_or_404(db, shelter_id)
+        if user.role == "shelter_admin":
+            assignment = db.scalar(
+                select(ShelterAdmin.id).where(
+                    ShelterAdmin.auth_user_id == user.id,
+                    ShelterAdmin.shelter_id == shelter_id,
+                )
             )
-        )
-        if assignment is None:
-            raise HTTPException(status_code=403, detail="You are not assigned to this shelter.")
+            if assignment is None:
+                raise HTTPException(status_code=403, detail="You are not assigned to this shelter.")
 
-    changes = payload.model_dump(exclude_unset=True)
-    total_beds = changes.get("total_beds", shelter.total_beds)
-    available_beds = changes.get("available_beds", shelter.available_beds)
-    if available_beds > total_beds:
-        raise HTTPException(
-            status_code=422,
-            detail="available_beds must not exceed total_beds.",
-        )
-    for field, value in changes.items():
-        setattr(shelter, field, value)
-    shelter.updated_at = utcnow()
-    db.commit()
-    db.refresh(shelter)
-    return shelter
+        changes = payload.model_dump(exclude_unset=True)
+        total_beds = changes.get("total_beds", shelter.total_beds)
+        available_beds = changes.get("available_beds", shelter.available_beds)
+        if available_beds > total_beds:
+            raise HTTPException(status_code=422, detail="available_beds must not exceed total_beds.")
+        for field, value in changes.items():
+            setattr(shelter, field, value)
+        shelter.updated_at = utcnow()
+        db.commit()
+        db.refresh(shelter)
+        return shelter
+    except HTTPException:
+        db.rollback()
+        raise
 
 
 @app.get("/api/admin/shelters", response_model=list[ShelterOut])
@@ -209,14 +269,29 @@ def create_shelter_assignment(
     db: Session = Depends(get_db),
     _user: CurrentUser = Depends(require_role("super_admin")),
 ) -> dict[str, int | str]:
-    get_shelter_or_404(db, payload.shelter_id)
-    assignment = ShelterAdmin(**payload.model_dump())
-    db.add(assignment)
+    # Prevent simultaneous requests from both passing the duplicate check.
+    db.execute(text("BEGIN IMMEDIATE"))
     try:
+        get_shelter_or_404(db, payload.shelter_id)
+        if not inspect(db.connection()).has_table("user"):
+            raise HTTPException(status_code=503, detail="Initialize the Better Auth database first.")
+        target_role = db.execute(
+            text('SELECT role FROM "user" WHERE id = :user_id'),
+            {"user_id": payload.auth_user_id},
+        ).scalar_one_or_none()
+        if target_role is None:
+            raise HTTPException(status_code=404, detail="Auth user not found.")
+        if target_role != "shelter_admin":
+            raise HTTPException(status_code=422, detail="Shelter assignments require a shelter_admin account.")
+        assignment = ShelterAdmin(**payload.model_dump())
+        db.add(assignment)
         db.commit()
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="That administrator is already assigned.") from None
+    except HTTPException:
+        db.rollback()
+        raise
     db.refresh(assignment)
     return {"id": assignment.id, "auth_user_id": assignment.auth_user_id, "shelter_id": assignment.shelter_id}
 
@@ -228,29 +303,41 @@ def initialize_driver(
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
     if not user.phone_number or not user.phone_number_verified:
+        existing = db.scalar(select(Driver).where(Driver.auth_user_id == user.id))
+        if existing is not None:
+            existing.is_available = False
+            existing.sms_notifications_enabled = False
+            db.commit()
         raise HTTPException(
             status_code=403,
             detail="Verify your phone number with an SMS code before setting up a driver profile.",
         )
-    existing = db.scalar(select(Driver).where(Driver.auth_user_id == user.id))
-    if existing is not None:
-        existing.phone_number = user.phone_number
-        existing.sms_notifications_enabled = payload.sms_notifications_enabled
-        db.commit()
-        db.refresh(existing)
-        return existing
-    driver = Driver(
-        auth_user_id=user.id,
-        phone_number=user.phone_number,
-        sms_notifications_enabled=payload.sms_notifications_enabled,
-    )
-    db.add(driver)
     try:
+        db.execute(text("BEGIN IMMEDIATE"))
+        existing = db.scalar(select(Driver).where(Driver.auth_user_id == user.id))
+        if existing is not None:
+            phone_changed = existing.phone_number != user.phone_number
+            existing.phone_number = user.phone_number
+            existing.sms_notifications_enabled = payload.sms_notifications_enabled
+            if phone_changed:
+                existing.is_available = False
+            if existing.vehicle is None:
+                existing.vehicle = Car(**payload.vehicle.model_dump())
+            db.commit()
+            db.refresh(existing)
+            return existing
+
+        driver = Driver(
+            auth_user_id=user.id,
+            phone_number=user.phone_number,
+            sms_notifications_enabled=payload.sms_notifications_enabled,
+            vehicle=Car(**payload.vehicle.model_dump()),
+        )
+        db.add(driver)
         db.commit()
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         db.rollback()
-        # A concurrent, identical initialization is still idempotent.
-        return get_driver_or_404(db, user.id)
+        raise HTTPException(status_code=409, detail="Driver profile changed concurrently. Try again.") from None
     db.refresh(driver)
     return driver
 
@@ -259,7 +346,32 @@ def initialize_driver(
 def get_my_driver(
     db: Session = Depends(get_db), user: CurrentUser = Depends(require_role("driver"))
 ) -> Driver:
-    return get_driver_or_404(db, user.id)
+    driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
+    return driver
+
+
+@app.patch("/api/drivers/me/vehicle", response_model=DriverOut)
+def update_my_vehicle(
+    payload: VehicleInput,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(require_role("driver")),
+) -> Driver:
+    db.execute(text("BEGIN IMMEDIATE"))
+    try:
+        driver = get_driver_or_404(db, user.id)
+        require_verified_driver_phone(db, driver, user)
+        if driver.vehicle is None:
+            driver.vehicle = Car(**payload.model_dump())
+        else:
+            for field, value in payload.model_dump().items():
+                setattr(driver.vehicle, field, value)
+        db.commit()
+        db.refresh(driver)
+        return driver
+    except HTTPException:
+        db.rollback()
+        raise
 
 
 @app.patch("/api/drivers/me", response_model=DriverOut)
@@ -270,9 +382,15 @@ def update_my_driver(
 ) -> Driver:
     driver = get_driver_or_404(db, user.id)
     if not user.phone_number or not user.phone_number_verified:
+        driver.is_available = False
+        driver.sms_notifications_enabled = False
+        db.commit()
         raise HTTPException(status_code=403, detail="Verify your phone number before updating driver settings.")
+    phone_changed = driver.phone_number != user.phone_number
     driver.phone_number = user.phone_number
     driver.sms_notifications_enabled = payload.sms_notifications_enabled
+    if phone_changed:
+        driver.is_available = False
     db.commit()
     db.refresh(driver)
     return driver
@@ -285,8 +403,11 @@ def update_driver_availability(
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
     driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
     if payload.is_available and not driver.is_verified:
         raise HTTPException(status_code=403, detail="Only verified drivers can go online.")
+    if payload.is_available and driver.vehicle is None:
+        raise HTTPException(status_code=403, detail="Register a vehicle before going online.")
     driver.is_available = payload.is_available
     db.commit()
     db.refresh(driver)
@@ -359,7 +480,22 @@ def driver_requests(
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_role("driver")),
 ) -> list[DriverRideRequest]:
-    require_eligible_driver(db, user)
+    driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
+    if not driver.is_verified:
+        raise HTTPException(status_code=403, detail="Your driver profile has not been verified.")
+    active_ride_id = db.scalar(
+        select(RideRequest.id).where(
+            RideRequest.driver_id == driver.id,
+            RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS")),
+        )
+    )
+    if active_ride_id is not None:
+        return []
+    if not driver.is_available:
+        raise HTTPException(status_code=403, detail="Set yourself online before viewing requests.")
+    if driver.vehicle is None:
+        raise HTTPException(status_code=403, detail="Register a vehicle before viewing ride requests.")
     query: Select[tuple[RideRequest]] = (
         select(RideRequest)
         .options(joinedload(RideRequest.shelter))
@@ -370,7 +506,7 @@ def driver_requests(
     return [
         DriverRideRequest(
             id=ride.id,
-            pickup_area=ride.pickup_address or "Location shared after acceptance",
+            pickup_area=pickup_area(ride),
             shelter_id=ride.shelter_id,
             shelter_name=ride.shelter.name,
             status=ride.status,
@@ -378,6 +514,21 @@ def driver_requests(
         )
         for ride in rides
     ]
+
+
+@app.get("/api/drivers/me/active-ride", response_model=RideAssignedOut | None)
+def get_my_active_ride(
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(require_role("driver")),
+) -> RideAssignedOut | None:
+    driver = get_driver_or_404(db, user.id)
+    ride = db.scalar(
+        select(RideRequest).where(
+            RideRequest.driver_id == driver.id,
+            RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS")),
+        )
+    )
+    return RideAssignedOut.model_validate(ride) if ride is not None else None
 
 
 @app.post("/api/rides/{ride_id}/accept", response_model=RideAssignedOut)
@@ -432,22 +583,27 @@ def update_ride_status(
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_role("driver")),
 ) -> RideAssignedOut:
-    driver = get_driver_or_404(db, user.id)
-    ride = db.get(RideRequest, ride_id)
-    if ride is None:
-        raise HTTPException(status_code=404, detail="Ride not found.")
-    if ride.driver_id != driver.id:
-        raise HTTPException(status_code=403, detail="This ride is not assigned to you.")
+    db.execute(text("BEGIN IMMEDIATE"))
+    try:
+        driver = get_driver_or_404(db, user.id)
+        ride = db.get(RideRequest, ride_id)
+        if ride is None:
+            raise HTTPException(status_code=404, detail="Ride not found.")
+        if ride.driver_id != driver.id:
+            raise HTTPException(status_code=403, detail="This ride is not assigned to you.")
 
-    allowed_transitions = {
-        "ACCEPTED": {"IN_PROGRESS", "CANCELLED"},
-        "IN_PROGRESS": {"COMPLETED"},
-    }
-    if payload.status not in allowed_transitions.get(ride.status, set()):
-        raise HTTPException(status_code=409, detail="That ride status transition is not allowed.")
-    ride.status = payload.status
-    if payload.status == "COMPLETED":
-        ride.completed_at = utcnow()
-    db.commit()
-    db.refresh(ride)
-    return RideAssignedOut.model_validate(ride)
+        allowed_transitions = {
+            "ACCEPTED": {"IN_PROGRESS", "CANCELLED"},
+            "IN_PROGRESS": {"COMPLETED"},
+        }
+        if payload.status not in allowed_transitions.get(ride.status, set()):
+            raise HTTPException(status_code=409, detail="That ride status transition is not allowed.")
+        ride.status = payload.status
+        if payload.status == "COMPLETED":
+            ride.completed_at = utcnow()
+        db.commit()
+        db.refresh(ride)
+        return RideAssignedOut.model_validate(ride)
+    except HTTPException:
+        db.rollback()
+        raise

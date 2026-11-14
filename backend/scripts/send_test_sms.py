@@ -1,17 +1,17 @@
-"""Send one test SMS: python scripts/send_test_sms.py +14703300803"""
+"""Send one test SMS: python scripts/send_test_sms.py +15551234567"""
 
-import os
 import sys
 
-from app.notifications import send_ride_request_sms
+from shiptohome.sms import send_sms
 
 
 if len(sys.argv) != 2:
     raise SystemExit("Usage: python scripts/send_test_sms.py +15551234567")
 
-sid = send_ride_request_sms(
-    phone_number=sys.argv[1],
-    ride_id=123,
-    base_url=os.getenv("FRONTEND_URL", "http://localhost:3000"),
+result = send_sms(
+    sys.argv[1],
+    "ShelterConnect test message. Reply STOP to stop all ShelterConnect texts.",
 )
-print(f"SMS sent successfully: {sid}")
+if result != "sent":
+    raise SystemExit(f"SMS was not sent: {result}")
+print("SMS sent successfully.")

@@ -14,15 +14,19 @@ Complete the remaining shelter management responsibilities authorized in Ben's s
 Use existing SQLAlchemy models and verified JWT dependencies. Preserve Better Auth ownership of authentication schema and account creation. Restrict assignments to existing shelter administrators. Do not implement driver or ride endpoints. Demo credentials must be local, generated, and ignored by git.
 
 ## Code Map
-- `backend/app/shelters/`: schemas, services, routes and model import compatibility.
-- `backend/app/main.py`: route registration.
-- `backend/app/seed.py`, `auth/src/seed-demo.ts`: repeatable demo provisioning.
-- `backend/tests/test_shelters.py`: endpoint and authorization regression checks.
+- Current API routes: `backend/main.py`; models, validation, and shelter seeding:
+  `backend/src/shiptohome/`.
+- Better Auth configuration and operator bootstrap: `frontend/lib/auth.ts` and
+  `frontend/scripts/bootstrap-admin.ts`.
+- Endpoint and authorization regression checks: `backend/tests/test_api.py`.
+
+The modular `backend/app/` and standalone `auth/` implementations described in
+the original checklist were consolidated into this shared-database project.
 
 ## Tasks & Acceptance
 - [x] Add five specified endpoints and model compatibility imports.
 - [x] Validate payload types, capacity and assignment eligibility; enforce assignment ownership and timestamps.
-- [x] Seed four labeled fictional shelters and two administrators with supported Better Auth APIs.
+- [x] Seed fictional shelters and provide a supported Better Auth admin bootstrap flow.
 - [x] Initialize and seed the local SQLite file.
 - [x] Verify endpoints, auth and database tests; update Ben's checklist and startup docs.
 
@@ -37,10 +41,9 @@ Three independent reviews checked correctness, boundary cases, and acceptance. F
 
 ## Suggested Review Order
 
-- API entry points and role requirements: [router.py:1](../backend/app/shelters/router.py#L1)
-- Assignment eligibility, ownership and serialized updates: [service.py:1](../backend/app/shelters/service.py#L1)
-- Strict payload types and SQLite limits: [schemas.py:1](../backend/app/shelters/schemas.py#L1)
-- Local account provisioning: [seed-demo.ts:1](../auth/src/seed-demo.ts#L1)
-- Fictional shelter provisioning: [seed.py:1](../backend/app/seed.py#L1)
-- Endpoint regression coverage: [test_shelters.py:1](../backend/tests/test_shelters.py#L1)
-- Real JWT integration: [smoke_auth.py:1](../backend/tests/smoke_auth.py#L1)
+- API entry points and role requirements: [main.py:1](../backend/main.py#L1)
+- Strict payload types and user role checks: [schemas.py:1](../backend/src/shiptohome/schemas.py#L1)
+- Local account provisioning: [bootstrap-admin.ts:1](../frontend/scripts/bootstrap-admin.ts#L1)
+- Fictional shelter provisioning: [seed.py:1](../backend/src/shiptohome/seed.py#L1)
+- Endpoint regression coverage: [test_api.py:1](../backend/tests/test_api.py#L1)
+- JWT verification: [test_auth.py:1](../backend/tests/test_auth.py#L1)

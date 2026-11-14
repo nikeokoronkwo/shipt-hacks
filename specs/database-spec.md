@@ -1,6 +1,6 @@
 # ShelterConnect — Database Specification
 
-This document consolidates the planned application database from `overall-spec.md`, `gavin-work-spec.md`, and `ben-work-spec.md`. It is a **target schema specification**, not a migration or a claim that every table is shipped. The active implementation is in `backend/src/shiptohome/models.py`; `initialize_application_tables()` creates the current domain tables. Vehicle (`cars`) storage remains planned and is not in the current API. See the root README for the active runtime and ownership boundary.
+This document consolidates the application database from `overall-spec.md`, `gavin-work-spec.md`, and `ben-work-spec.md`. It is a target schema reference; the active implementation is in `backend/src/shiptohome/models.py`, and `initialize_application_tables()` creates the current domain tables. See the root README for the active runtime and ownership boundary.
 
 ## Ownership and storage
 
@@ -21,7 +21,7 @@ drivers.id        ──< ride_requests.driver_id (nullable)
 drivers.id        ─── cars.driver_id (unique; zero or one car)
 ```
 
-A driver has at most one profile and at most one registered car. Drivers may create a profile before registering a car. An administrator may be assigned to multiple shelters, but the same assignment must not be duplicated. Rides are anonymous; they are not associated with a Better Auth requester account.
+A driver has at most one profile and at most one registered car. Driver setup requires a car before the profile can be initialized; existing profiles without a car must add one before going online. An administrator may be assigned to multiple shelters, but the same assignment must not be duplicated. Rides are anonymous; they are not associated with a Better Auth requester account.
 
 ## Application tables (SQLite reference DDL)
 
@@ -58,6 +58,7 @@ CREATE TABLE drivers (
     phone_number    TEXT NOT NULL CHECK (length(trim(phone_number)) > 0),
     is_verified     INTEGER NOT NULL DEFAULT 0 CHECK (is_verified IN (0, 1)),
     is_available    INTEGER NOT NULL DEFAULT 0 CHECK (is_available IN (0, 1)),
+    sms_notifications_enabled INTEGER NOT NULL DEFAULT 0 CHECK (sms_notifications_enabled IN (0, 1)),
     CHECK (is_verified = 1 OR is_available = 0)
 );
 
@@ -106,9 +107,9 @@ CREATE UNIQUE INDEX ux_ride_requests_one_active_per_driver
 
 - `shelters.services` is a JSON-encoded array of service names; validate JSON shape in the application. Available beds are **reported capacity**, not a reservation or guaranteed admission. Seed data must be fictional and labeled as demonstration availability.
 - `shelter_admins.auth_user_id` must refer to an authenticated account granted the `shelter_admin` role through Better Auth. A `super_admin` needs no assignment row to manage shelters.
-- `drivers.phone_number` is a string, not an integer; preserve leading zeros and punctuation. Profile initialization derives `auth_user_id` from a verified JWT and is idempotent. Only a super admin (or explicitly marked local demo workflow) may set `is_verified`; a driver may go online only when verified. If verification is removed, set availability to false in the same transaction.
-- `cars.driver_id` enforces at most one car per driver, including concurrent registrations. Update the existing car to change vehicle details. Make, model, color, and license plate are required nonblank strings. Preserve plate letters, leading zeros, and punctuation. Plates are not globally unique because issuing jurisdictions are not stored. Deleting a referenced driver is blocked; deleting a car does not delete its driver. Future car endpoints must derive ownership from the authenticated driver and only expose vehicle details to authorized callers (such as the assigned rider).
-- `ride_requests.pickup_address` may accompany coordinates or replace them; coordinate pairs must be complete. Before assignment, pending-ride listings must not disclose full names or precise pickup coordinates. A general `pickup_area` can be derived from the address or an approved coarse location; it is not an extra stored column.
+- `drivers.phone_number` is a string, not an integer; preserve leading zeros and punctuation. Profile initialization derives `auth_user_id` and phone number from a verified JWT and is idempotent. Only a super admin (or explicitly marked local demo workflow) may set `is_verified`; a driver may go online only when verified, phone-verified, and registered with a car. If verification or phone verification is removed, set availability and SMS consent to false. A changed verified phone does not inherit consent for the previous number. SMS delivery checks the live Better Auth phone and verification state.
+- `cars.driver_id` enforces at most one car per driver. Driver initialization requires a vehicle; `PATCH /api/drivers/me/vehicle` adds or updates it. Retries preserve existing vehicle details. Make, model, color, and license plate are required nonblank strings with input limits matching the model columns. Preserve plate letters, leading zeros, and punctuation. Plates are not globally unique because issuing jurisdictions are not stored. Vehicle details are returned only to the authenticated driver profile.
+- `ride_requests.pickup_address` may accompany coordinates or replace them; coordinate pairs must be complete. Before assignment, pending-ride listings must not disclose full names, street addresses, or precise pickup coordinates. Coordinate pickups are represented by a coarse 0.1-degree cell; address-only pickups use a generic label until assignment. The assigned driver's active-ride endpoint returns full details.
 - Generate a cryptographically random private tracking token when a ride is created, return it only once, and store only a one-way hash in `tracking_token_hash`. A public status lookup requires that token; do not return personal pickup or driver phone data unnecessarily.
 - A ride begins `PENDING`. Allowed transitions: `PENDING → ACCEPTED`, `PENDING → CANCELLED`, `ACCEPTED → IN_PROGRESS`, `ACCEPTED → CANCELLED`, `IN_PROGRESS → COMPLETED`. Set `accepted_at` when accepted and `completed_at` when completed. Transition and ownership checks belong in the application/transaction; the status `CHECK` only constrains the set of values.
 - Acceptance must check the driver is verified, online, and without an active ride **inside a serialized transaction**, then conditionally update a pending, unassigned ride. In SQLite, `BEGIN IMMEDIATE` can serialize competing writers; check affected rows and return 409 on conflicts. The partial unique index adds a second safeguard against multiple active rides for the same driver.

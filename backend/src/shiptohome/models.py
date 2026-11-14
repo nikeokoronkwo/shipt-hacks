@@ -71,6 +71,15 @@ class ShelterAdmin(Base):
 
 class Driver(Base):
     __tablename__ = "drivers"
+    __table_args__ = (
+        CheckConstraint("is_verified IN (0, 1)", name="ck_drivers_verified_boolean"),
+        CheckConstraint("is_available IN (0, 1)", name="ck_drivers_available_boolean"),
+        CheckConstraint(
+            "sms_notifications_enabled IN (0, 1)",
+            name="ck_drivers_sms_notifications_boolean",
+        ),
+        CheckConstraint("is_verified = 1 OR is_available = 0", name="ck_drivers_verified_before_online"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     auth_user_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
@@ -80,6 +89,32 @@ class Driver(Base):
     sms_notifications_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     rides: Mapped[list["RideRequest"]] = relationship(back_populates="driver")
+    vehicle: Mapped["Car | None"] = relationship(
+        back_populates="driver", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class Car(Base):
+    """At most one registered vehicle per driver."""
+
+    __tablename__ = "cars"
+    __table_args__ = (
+        CheckConstraint("length(trim(make)) > 0", name="ck_cars_make_nonblank"),
+        CheckConstraint("length(trim(model)) > 0", name="ck_cars_model_nonblank"),
+        CheckConstraint("length(trim(color)) > 0", name="ck_cars_color_nonblank"),
+        CheckConstraint("length(trim(license_plate)) > 0", name="ck_cars_plate_nonblank"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    driver_id: Mapped[int] = mapped_column(
+        ForeignKey("drivers.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    make: Mapped[str] = mapped_column(String(100), nullable=False)
+    model: Mapped[str] = mapped_column(String(100), nullable=False)
+    color: Mapped[str] = mapped_column(String(80), nullable=False)
+    license_plate: Mapped[str] = mapped_column(String(40), nullable=False)
+
+    driver: Mapped[Driver] = relationship(back_populates="vehicle")
 
 
 class RideRequest(Base):

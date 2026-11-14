@@ -53,7 +53,7 @@ class DatabaseTests(unittest.TestCase):
     def test_application_owns_only_domain_tables(self):
         inspector = inspect(self.engine)
         tables = set(inspector.get_table_names())
-        self.assertEqual(tables, {"shelters", "shelter_admins", "drivers", "ride_requests"})
+        self.assertEqual(tables, {"shelters", "shelter_admins", "drivers", "cars", "ride_requests"})
         self.assertNotIn("user", tables)
         self.assertIn("sms_notifications_enabled", {
             column["name"] for column in inspector.get_columns("drivers")
@@ -99,6 +99,42 @@ class DatabaseTests(unittest.TestCase):
             with self.assertRaises(IntegrityError):
                 session.commit()
             session.rollback()
+
+    def test_each_driver_can_register_only_one_nonblank_vehicle(self):
+        with Session(self.engine) as session:
+            car = models.Car(
+                driver_id=1,
+                make="Toyota",
+                model="Camry",
+                color="Blue",
+                license_plate="001-ABC",
+            )
+            session.add(car)
+            session.commit()
+            self.assertEqual(car.license_plate, "001-ABC")
+
+        with self.assertRaises(IntegrityError):
+            with self.engine.begin() as connection:
+                connection.execute(
+                    models.Car.__table__.insert().values(
+                        driver_id=1,
+                        make="Honda",
+                        model="Civic",
+                        color="Red",
+                        license_plate="002-ABC",
+                    )
+                )
+        with self.assertRaises(IntegrityError):
+            with self.engine.begin() as connection:
+                connection.execute(
+                    models.Car.__table__.insert().values(
+                        driver_id=1,
+                        make=" ",
+                        model="Camry",
+                        color="Blue",
+                        license_plate="001-ABC",
+                    )
+                )
 
 
 if __name__ == "__main__":

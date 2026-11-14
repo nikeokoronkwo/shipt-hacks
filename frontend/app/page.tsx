@@ -10,6 +10,7 @@ import {
   requestRide,
   type RideCreated,
   type Shelter,
+  type VehicleProfile,
 } from "@/lib/api";
 
 type Notice = { tone: "error" | "success"; text: string } | null;
@@ -28,6 +29,12 @@ export default function Home() {
   const [phoneName, setPhoneName] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [smsAlerts, setSmsAlerts] = useState(false);
+  const [vehicle, setVehicle] = useState<Omit<VehicleProfile, "id">>({
+    make: "",
+    model: "",
+    color: "",
+    license_plate: "",
+  });
 
   useEffect(() => {
     listShelters()
@@ -49,15 +56,36 @@ export default function Home() {
     let active = true;
     getDriverProfile()
       .then((profile) => {
-        if (active) setSmsAlerts(profile.sms_notifications_enabled);
+        if (!active) return;
+        const phoneMatches = profile.phone_number === session.user.phoneNumber;
+        setSmsAlerts(phoneMatches && profile.sms_notifications_enabled);
+        if (profile.vehicle && phoneMatches) {
+          setVehicle({
+            make: profile.vehicle.make,
+            model: profile.vehicle.model,
+            color: profile.vehicle.color,
+            license_plate: profile.vehicle.license_plate,
+          });
+        }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         // A new driver has no application profile yet; setup below will create it.
+        if (
+          active &&
+          error instanceof Error &&
+          error.message.includes("verified phone changed")
+        ) {
+          setSmsAlerts(false);
+          setNotice({
+            tone: "error",
+            text: "Your phone changed. Review the SMS choice and save your driver profile again.",
+          });
+        }
       });
     return () => {
       active = false;
     };
-  }, [session?.user.id, session?.user.phoneNumberVerified]);
+  }, [session?.user.id, session?.user.phoneNumber, session?.user.phoneNumberVerified]);
 
   const totalOpenBeds = useMemo(
     () => shelters.reduce((total, shelter) => total + shelter.available_beds, 0),
@@ -160,7 +188,7 @@ export default function Home() {
     setSubmitting(true);
     setNotice(null);
     try {
-      await initializeDriver(smsAlerts);
+      await initializeDriver(smsAlerts, vehicle);
       setNotice({
         tone: "success",
         text: "Driver profile saved. A super administrator can now verify your account.",
@@ -365,6 +393,50 @@ export default function Home() {
             {session.user.phoneNumberVerified ? (
               <form className="phone-verify-form" onSubmit={handleDriverSetup}>
                 <p className="verified-phone">Verified phone · {session.user.phoneNumber}</p>
+                <div className="field-row">
+                  <label>
+                    Vehicle make
+                    <input
+                      required
+                      maxLength={100}
+                      value={vehicle.make}
+                      onChange={(event) => setVehicle({ ...vehicle, make: event.target.value })}
+                      placeholder="Toyota"
+                    />
+                  </label>
+                  <label>
+                    Vehicle model
+                    <input
+                      required
+                      maxLength={100}
+                      value={vehicle.model}
+                      onChange={(event) => setVehicle({ ...vehicle, model: event.target.value })}
+                      placeholder="Camry"
+                    />
+                  </label>
+                </div>
+                <div className="field-row">
+                  <label>
+                    Vehicle color
+                    <input
+                      required
+                      maxLength={80}
+                      value={vehicle.color}
+                      onChange={(event) => setVehicle({ ...vehicle, color: event.target.value })}
+                      placeholder="Blue"
+                    />
+                  </label>
+                  <label>
+                    License plate
+                    <input
+                      required
+                      maxLength={40}
+                      value={vehicle.license_plate}
+                      onChange={(event) => setVehicle({ ...vehicle, license_plate: event.target.value })}
+                      placeholder="ABC-1234"
+                    />
+                  </label>
+                </div>
                 <label className="consent-label">
                   <input
                     type="checkbox"
