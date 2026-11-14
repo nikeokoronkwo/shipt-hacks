@@ -8,10 +8,11 @@ import secrets
 from collections.abc import Generator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from math import floor
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import Select, select, text, update
+from sqlalchemy import Select, inspect, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, joinedload
 
@@ -85,6 +86,7 @@ def get_driver_or_404(db: Session, auth_user_id: str) -> Driver:
 
 def require_eligible_driver(db: Session, user: CurrentUser) -> Driver:
     driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
     if not driver.is_verified:
         raise HTTPException(status_code=403, detail="Your driver profile has not been verified.")
     if not driver.is_available:
@@ -92,18 +94,45 @@ def require_eligible_driver(db: Session, user: CurrentUser) -> Driver:
     return driver
 
 
+def require_verified_driver_phone(db: Session, driver: Driver, user: CurrentUser) -> None:
+    if not user.phone_number or not user.phone_number_verified:
+        changed = driver.is_available or driver.sms_notifications_enabled
+        driver.is_available = False
+        driver.sms_notifications_enabled = False
+        if changed:
+            db.commit()
+        raise HTTPException(status_code=403, detail="Verify your phone number before using driver tools.")
+    if driver.phone_number != user.phone_number:
+        driver.phone_number = user.phone_number
+        driver.is_available = False
+        driver.sms_notifications_enabled = False
+        db.commit()
+        raise HTTPException(status_code=409, detail="Your verified phone changed. Review SMS consent and go online again.")
+
+
+def pickup_area(ride: RideRequest) -> str:
+    if ride.pickup_latitude is not None and ride.pickup_longitude is not None:
+        lat = floor(ride.pickup_latitude * 10) / 10
+        lon = floor(ride.pickup_longitude * 10) / 10
+        return f"Area {lat:.1f} to {lat + 0.1:.1f} latitude, {lon:.1f} to {lon + 0.1:.1f} longitude"
+    return "Address pickup (location details available after acceptance)"
+
+
 def notify_available_drivers(shelter_name: str) -> None:
     """Send a minimal alert only to verified, online, opted-in drivers."""
     with SessionLocal() as db:
-        phone_numbers = db.scalars(
-            select(Driver.phone_number).where(
-                Driver.is_verified.is_(True),
-                Driver.is_available.is_(True),
-                Driver.sms_notifications_enabled.is_(True),
-                ~Driver.rides.any(RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS"))),
-            )
-        )
-        recipients = list(phone_numbers)
+        if not inspect(db.connection()).has_table("user"):
+            return
+        columns = {column["name"] for column in inspect(db.connection()).get_columns("user")}
+        if not {"phoneNumber", "phoneNumberVerified", "role"}.issubset(columns):
+            return
+        recipients = list(db.scalars(text(
+            'SELECT d.phone_number FROM drivers AS d JOIN "user" AS u ON u.id = d.auth_user_id '
+            'WHERE d.is_verified = 1 AND d.is_available = 1 AND d.sms_notifications_enabled = 1 '
+            'AND u.role = \'driver\' AND u."phoneNumberVerified" = 1 AND u."phoneNumber" = d.phone_number '
+            'AND NOT EXISTS (SELECT 1 FROM ride_requests AS r WHERE r.driver_id = d.id '
+            "AND r.status IN ('ACCEPTED', 'IN_PROGRESS'))"
+        )))
 
     message = (
         f"ShelterConnect: A ride request is available for {shelter_name}. "
@@ -228,14 +257,22 @@ def initialize_driver(
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
     if not user.phone_number or not user.phone_number_verified:
+        existing = db.scalar(select(Driver).where(Driver.auth_user_id == user.id))
+        if existing is not None:
+            existing.is_available = False
+            existing.sms_notifications_enabled = False
+            db.commit()
         raise HTTPException(
             status_code=403,
             detail="Verify your phone number with an SMS code before setting up a driver profile.",
         )
     existing = db.scalar(select(Driver).where(Driver.auth_user_id == user.id))
     if existing is not None:
+        phone_changed = existing.phone_number != user.phone_number
         existing.phone_number = user.phone_number
         existing.sms_notifications_enabled = payload.sms_notifications_enabled
+        if phone_changed:
+            existing.is_available = False
         db.commit()
         db.refresh(existing)
         return existing
@@ -259,7 +296,9 @@ def initialize_driver(
 def get_my_driver(
     db: Session = Depends(get_db), user: CurrentUser = Depends(require_role("driver"))
 ) -> Driver:
-    return get_driver_or_404(db, user.id)
+    driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
+    return driver
 
 
 @app.patch("/api/drivers/me", response_model=DriverOut)
@@ -270,9 +309,15 @@ def update_my_driver(
 ) -> Driver:
     driver = get_driver_or_404(db, user.id)
     if not user.phone_number or not user.phone_number_verified:
+        driver.is_available = False
+        driver.sms_notifications_enabled = False
+        db.commit()
         raise HTTPException(status_code=403, detail="Verify your phone number before updating driver settings.")
+    phone_changed = driver.phone_number != user.phone_number
     driver.phone_number = user.phone_number
     driver.sms_notifications_enabled = payload.sms_notifications_enabled
+    if phone_changed:
+        driver.is_available = False
     db.commit()
     db.refresh(driver)
     return driver
@@ -285,6 +330,7 @@ def update_driver_availability(
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
     driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
     if payload.is_available and not driver.is_verified:
         raise HTTPException(status_code=403, detail="Only verified drivers can go online.")
     driver.is_available = payload.is_available
@@ -372,7 +418,18 @@ def driver_requests(
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_role("driver")),
 ) -> list[DriverRideRequest]:
-    require_eligible_driver(db, user)
+    driver = get_driver_or_404(db, user.id)
+    require_verified_driver_phone(db, driver, user)
+    if not driver.is_verified:
+        raise HTTPException(status_code=403, detail="Your driver profile has not been verified.")
+    active_id = db.scalar(select(RideRequest.id).where(
+        RideRequest.driver_id == driver.id,
+        RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS")),
+    ))
+    if active_id is not None:
+        return []
+    if not driver.is_available:
+        raise HTTPException(status_code=403, detail="Set yourself online before viewing requests.")
     query: Select[tuple[RideRequest]] = (
         select(RideRequest)
         .options(joinedload(RideRequest.shelter))
@@ -383,7 +440,7 @@ def driver_requests(
     return [
         DriverRideRequest(
             id=ride.id,
-            pickup_area=ride.pickup_address or "Location shared after acceptance",
+            pickup_area=pickup_area(ride),
             shelter_id=ride.shelter_id,
             shelter_name=ride.shelter.name,
             status=ride.status,
