@@ -372,17 +372,17 @@ The frontend must complete authentication before initializing the driver profile
 
 ## 9. Acceptance Criteria
 
-- [ ] Better Auth service runs.
-- [ ] Email/password registration works.
-- [ ] Login/logout works.
-- [ ] Better Auth sessions persist.
-- [ ] Roles are configured.
-- [ ] Public users cannot create administrator accounts.
-- [ ] FastAPI verifies Better Auth JWTs.
-- [ ] Invalid JWTs return 401.
-- [ ] Insufficient permissions return 403.
-- [ ] Reusable role dependencies are implemented.
-- [ ] SQLite database initializes successfully.
+- [x] Better Auth service runs.
+- [x] Email/password registration works.
+- [x] Login/logout works.
+- [x] Better Auth sessions persist.
+- [x] Roles are configured.
+- [x] Public users cannot create administrator accounts.
+- [x] FastAPI verifies Better Auth JWTs.
+- [x] Invalid JWTs return 401.
+- [x] Insufficient permissions return 403.
+- [x] Reusable role dependencies are implemented.
+- [x] SQLite database initializes successfully.
 - [ ] Shelter listing endpoint works.
 - [ ] Shelter detail endpoint works.
 - [ ] Shelter administrators can update assigned shelters.
@@ -397,3 +397,18 @@ The frontend must complete authentication before initializing the driver profile
 Developer 1 is finished when authentication works, role checks are enforced by FastAPI, shelter data is available through public endpoints, and authorized administrators can update their shelters.
 
 The shared authentication dependencies and database interfaces must be usable by Developer 2 without modifications.
+
+## 11. Iteration 1 Progress — Backend Authentication
+
+Scope approved by Ben: authentication service, trusted roles, FastAPI JWT validation, and verification/documentation. Shelter APIs and domain models remain for a later iteration.
+
+- [x] Better Auth service and SQLite auth migrations.
+- [x] Trusted driver signup and protected administrator role management.
+- [x] JWT issuance and reusable FastAPI authentication/role dependencies (15 JWT/role tests passing).
+- [x] End-to-end verification and startup documentation.
+
+Implementation started 2026-11-14. Detailed execution record: [backend authentication](spec-backend-authentication.md).
+
+Verification: TypeScript type check passed; 15 Python JWT/role tests passed; real HTTP smoke test passed using a temporary SQLite database. Confirmed role injection rejection, protected admin operations, JWT access to FastAPI, session persistence across restart, and login/logout. Setup: [auth README](../auth/README.md) and [backend README](../backend/README.md).
+
+MVP limitation: issued JWTs remain valid for up to 15 minutes after logout or a role change. Shelter data, shelter permissions/assignments, driver profiles, and transportation endpoints are not part of iteration 1.
