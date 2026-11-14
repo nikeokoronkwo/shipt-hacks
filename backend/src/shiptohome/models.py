@@ -77,6 +77,7 @@ class Driver(Base):
     phone_number: Mapped[str] = mapped_column(String(32), nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sms_notifications_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     rides: Mapped[list["RideRequest"]] = relationship(back_populates="driver")
 

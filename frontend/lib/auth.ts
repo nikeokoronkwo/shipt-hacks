@@ -1,10 +1,13 @@
+import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { betterAuth } from "better-auth";
-import { admin, jwt } from "better-auth/plugins";
+import { APIError, createAuthMiddleware } from "better-auth/api";
+import { admin, jwt, phoneNumber } from "better-auth/plugins";
 import Database from "better-sqlite3";
 
+import { sendSms } from "./sms";
 import {
   accessControl,
   driverRole,
@@ -16,73 +19,145 @@ const databaseFile =
   process.env.DATABASE_FILE ??
   path.resolve(process.cwd(), "../data/shelterconnect.sqlite3");
 const baseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+const audience = process.env.AUTH_AUDIENCE ?? "shelterconnect-api";
+const applicationRoles = {
+  driver: driverRole,
+  shelter_admin: shelterAdminRole,
+  super_admin: superAdminRole,
+} as const;
+const trustedOrigins = [
+  baseURL,
+  ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+];
 
-const hasProductionSecret = Boolean(process.env.BETTER_AUTH_SECRET);
+export function assertAuthConfiguration(): void {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret || secret.length < 32 || secret.includes("replace-with")) {
+    throw new Error("Set BETTER_AUTH_SECRET to a random value of at least 32 characters.");
+  }
+}
+
+// Fail before serving auth routes if the session/JWT secret is missing or a
+// copied example value is still in use.
+assertAuthConfiguration();
 
 mkdirSync(path.dirname(databaseFile), { recursive: true });
-const database = new Database(databaseFile);
+export const database = new Database(databaseFile);
 
 // These match the Python SQLAlchemy connection settings. WAL permits a reader
-// while the other process writes; the timeout lets a short write wait instead
-// of immediately producing a spurious `database is locked` error.
+// while the other process writes; the timeout lets an active write finish
+// instead of immediately producing a spurious `database is locked` error.
 database.pragma("journal_mode = WAL");
 database.pragma("foreign_keys = ON");
-database.pragma("busy_timeout = 5000");
+database.pragma("busy_timeout = 30000");
 database.pragma("synchronous = NORMAL");
 
 export const auth = betterAuth({
   database,
   baseURL,
-  secret:
-    process.env.BETTER_AUTH_SECRET ??
-    "development-only-change-this-better-auth-secret-before-deploying",
-  trustedOrigins: [baseURL],
+  secret: process.env.BETTER_AUTH_SECRET,
+  trustedOrigins,
   emailAndPassword: {
     enabled: true,
+    minPasswordLength: 12,
+    maxPasswordLength: 256,
+    revokeSessionsOnPasswordReset: true,
   },
   plugins: [
     admin({
       ac: accessControl,
-      roles: {
-        driver: driverRole,
-        shelter_admin: shelterAdminRole,
-        super_admin: superAdminRole,
-      },
+      roles: applicationRoles,
       defaultRole: "driver",
       adminRoles: ["super_admin"],
     }),
     jwt({
       jwt: {
-        issuer: baseURL,
-        audience: process.env.AUTH_AUDIENCE ?? "shelterconnect-api",
         expirationTime: "15m",
-        // Keep FastAPI's authorization input deliberately small and explicit.
-        definePayload: ({ user }) => ({ role: user.role }),
+        issuer: baseURL,
+        audience,
+        // FastAPI receives only the authorization and verified contact claims
+        // needed for driver APIs. It never trusts a phone supplied in a body.
+        definePayload: ({ user }) => ({
+          role: user.role,
+          phone_number: user.phoneNumber ?? null,
+          phone_number_verified: user.phoneNumberVerified === true,
+        }),
       },
       jwks: {
         keyPairConfig: { alg: "EdDSA", crv: "Ed25519" },
       },
     }),
+    phoneNumber({
+      otpLength: 6,
+      expiresIn: 5 * 60,
+      allowedAttempts: 3,
+      requireVerification: true,
+      phoneNumberValidator: (phoneNumber) => /^\+[1-9]\d{7,14}$/.test(phoneNumber),
+      sendOTP: async ({ phoneNumber: to, code }) => {
+        await sendSms({
+          to,
+          body: `Your ShelterConnect verification code is ${code}. It expires in 5 minutes. Don't share it. Reply STOP to stop all ShelterConnect texts.`,
+        });
+      },
+      signUpOnVerification: {
+        getTempEmail: (phoneNumber) => {
+          const identifier = createHash("sha256").update(phoneNumber).digest("hex").slice(0, 24);
+          return `driver-${identifier}@phone.shelterconnect.invalid`;
+        },
+        getTempName: () => "ShelterConnect Driver",
+      },
+    }),
   ],
+  hooks: {
+    before: createAuthMiddleware(async (context) => {
+      if (context.path !== "/admin/set-role" && context.path !== "/admin/create-user") {
+        return;
+      }
+      const requestedRole = context.body?.role ?? context.body?.data?.role;
+      if (
+        requestedRole !== undefined &&
+        (typeof requestedRole !== "string" || !Object.hasOwn(applicationRoles, requestedRole))
+      ) {
+        throw new APIError("BAD_REQUEST", {
+          message: "Specify one supported ShelterConnect role.",
+        });
+      }
+    }),
+  },
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    customRules: {
+      // Match Better Auth's internal route path, without the /api/auth prefix.
+      "/phone-number/send-otp": { window: 60, max: 3 },
+    },
+  },
+  advanced: {
+    backgroundTasks: {
+      handler: (promise) => {
+        void promise.catch(() => {
+          // Better Auth already logs the delivery error. Never log the OTP.
+        });
+      },
+    },
+  },
   databaseHooks: {
     user: {
       create: {
         before: async (user, context) => {
-          // Do not overwrite a role selected through Better Auth's protected
-          // admin endpoint. Public email/password registration, on the other
-          // hand, is always a driver registration.
-          if (context?.path !== "/sign-up/email") {
+          // Only the protected admin create-user endpoint can create a
+          // non-driver account. Every public signup path defaults to driver.
+          if (context?.path === "/admin/create-user") {
             return { data: user };
           }
           return {
             data: {
               ...user,
-              // This is a local demo bootstrap escape hatch; remove the env
-              // var in a real deployment.
-              role:
-                process.env.DEMO_SUPER_ADMIN_EMAIL === user.email
-                  ? "super_admin"
-                  : "driver",
+              role: "driver",
             },
           };
         },
@@ -90,9 +165,3 @@ export const auth = betterAuth({
     },
   },
 });
-
-export function assertAuthSecretConfigured(): void {
-  if (process.env.NODE_ENV === "production" && !hasProductionSecret) {
-    throw new Error("BETTER_AUTH_SECRET must be set in production.");
-  }
-}

@@ -12,7 +12,7 @@ import os
 from collections.abc import Generator
 from pathlib import Path
 
-from sqlalchemy import Engine, event
+from sqlalchemy import Engine, event, inspect, text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -36,7 +36,7 @@ _ensure_database_directory()
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False, "timeout": 5},
+    connect_args={"check_same_thread": False, "timeout": 30},
     pool_pre_ping=True,
 )
 
@@ -52,7 +52,7 @@ def configure_sqlite(dbapi_connection: object, _connection_record: object) -> No
     cursor = dbapi_connection.cursor()  # type: ignore[union-attr]
     cursor.execute("PRAGMA foreign_keys = ON")
     cursor.execute("PRAGMA journal_mode = WAL")
-    cursor.execute("PRAGMA busy_timeout = 5000")
+    cursor.execute("PRAGMA busy_timeout = 30000")
     cursor.execute("PRAGMA synchronous = NORMAL")
     cursor.close()
 
@@ -78,3 +78,14 @@ def initialize_application_tables() -> None:
     from shiptohome import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    # create_all intentionally does not change existing tables. Keep the small
+    # application-owned schema upgrade explicit and idempotent.
+    driver_columns = {column["name"] for column in inspect(engine).get_columns("drivers")}
+    if "sms_notifications_enabled" not in driver_columns:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE drivers ADD COLUMN "
+                    "sms_notifications_enabled BOOLEAN NOT NULL DEFAULT 0"
+                )
+            )

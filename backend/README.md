@@ -1,22 +1,32 @@
-## ShelterConnect API
+# ShelterConnect API
 
-This service owns shelters, driver profiles, and transportation requests. It
-does **not** store passwords, sessions, or Better Auth users.
+FastAPI owns shelters, driver profiles, and transportation requests. It does
+not store passwords, sessions, or Better Auth users. The active auth contract
+and shared SQLite table ownership are documented in the repository
+[README](../README.md).
 
-### Run locally
+From the repository root, load the shared environment in each terminal.
 
-From the repository root, first migrate Better Auth's tables, then run this
-API:
+Terminal 1 — migrate Better Auth's tables and start Next.js:
 
 ```sh
-cd frontend && pnpm auth:migrate
-cd ../backend && uv run uvicorn main:app --reload --port 8000
+set -a; source .env; set +a
+cd frontend && pnpm auth:migrate && pnpm dev
 ```
 
-The API seeds fictional Birmingham shelters on first launch. Its default
-database is `../data/shelterconnect.sqlite3`, the same file used by the Next
-application. Set an absolute `DATABASE_URL` to relocate it for deployment.
+Terminal 2 — start the API:
 
-FastAPI creates only application tables. Better Auth owns and migrates `user`,
-`session`, `account`, `verification`, and `jwks`; never create or alter those
-from Python.
+```sh
+set -a; source .env; set +a
+cd backend && uv run uvicorn main:app --reload --port 8000
+```
+
+FastAPI creates only application tables and seeds the fictional Birmingham
+shelters on first launch. Better Auth owns the auth tables and their migrations.
+Never alter those tables through SQLAlchemy.
+
+Run the backend JWT and SQLite checks from `backend/`:
+
+```sh
+uv run python -m unittest discover -s tests -v
+```

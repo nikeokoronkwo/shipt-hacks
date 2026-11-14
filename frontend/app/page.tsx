@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
 import {
+  getDriverProfile,
   initializeDriver,
   listShelters,
   requestRide,
@@ -19,8 +20,14 @@ export default function Home() {
   const [loadingShelters, setLoadingShelters] = useState(true);
   const [notice, setNotice] = useState<Notice>(null);
   const [authMode, setAuthMode] = useState<"sign-in" | "sign-up">("sign-up");
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [submitting, setSubmitting] = useState(false);
   const [ride, setRide] = useState<RideCreated | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [phoneName, setPhoneName] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [smsAlerts, setSmsAlerts] = useState(false);
 
   useEffect(() => {
     listShelters()
@@ -37,11 +44,26 @@ export default function Home() {
       .finally(() => setLoadingShelters(false));
   }, []);
 
+  useEffect(() => {
+    if (!session?.user.phoneNumberVerified) return;
+    let active = true;
+    getDriverProfile()
+      .then((profile) => {
+        if (active) setSmsAlerts(profile.sms_notifications_enabled);
+      })
+      .catch(() => {
+        // A new driver has no application profile yet; setup below will create it.
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.user.id, session?.user.phoneNumberVerified]);
+
   const totalOpenBeds = useMemo(
     () => shelters.reduce((total, shelter) => total + shelter.available_beds, 0),
     [shelters],
   );
-  const userRole = (session?.user as { role?: string } | undefined)?.role;
+  const userRole = session?.user.role;
 
   async function handleAccount(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,26 +73,86 @@ export default function Home() {
     const email = String(values.get("email") ?? "");
     const password = String(values.get("password") ?? "");
 
-    const result =
-      authMode === "sign-up"
-        ? await authClient.signUp.email({
-            name: String(values.get("name") ?? ""),
-            email,
-            password,
-          })
-        : await authClient.signIn.email({ email, password });
-    setSubmitting(false);
-    if (result.error) {
-      setNotice({ tone: "error", text: result.error.message ?? "Authentication failed." });
-      return;
-    }
-    setNotice({
-      tone: "success",
-      text:
+    try {
+      const result =
         authMode === "sign-up"
-          ? "Your driver account is ready. Add a phone number to activate your profile."
-          : "Welcome back.",
-    });
+          ? await authClient.signUp.email({
+              name: String(values.get("name") ?? ""),
+              email,
+              password,
+            })
+          : await authClient.signIn.email({ email, password });
+      if (result.error) {
+        setNotice({ tone: "error", text: result.error.message ?? "Authentication failed." });
+        return;
+      }
+      setNotice({
+        tone: "success",
+        text:
+          authMode === "sign-up"
+            ? "Your driver account is ready. Verify a phone number before setting up your profile."
+            : "Welcome back. Verify your phone number to use driver tools.",
+      });
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Authentication failed." });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSendPhoneCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setNotice(null);
+    try {
+      const result = await authClient.phoneNumber.sendOtp({ phoneNumber });
+      if (result.error) {
+        setNotice({ tone: "error", text: result.error.message ?? "Could not send a code." });
+        return;
+      }
+      setOtpSent(true);
+      setNotice({ tone: "success", text: "A one-time code was sent by SMS. It expires in five minutes." });
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Could not send a code." });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleVerifyPhoneCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setNotice(null);
+    try {
+      const result = await authClient.phoneNumber.verify({
+        phoneNumber,
+        code: phoneCode,
+        ...(session ? { updatePhoneNumber: true } : {}),
+      });
+      if (result.error) {
+        setNotice({ tone: "error", text: result.error.message ?? "That code could not be verified." });
+        return;
+      }
+      if (!session && phoneName.trim()) {
+        const nameResult = await authClient.updateUser({ name: phoneName.trim() });
+        if (nameResult.error) {
+          setNotice({ tone: "error", text: "Phone verified, but the display name could not be saved." });
+          return;
+        }
+      }
+      setOtpSent(false);
+      setPhoneCode("");
+      setNotice({
+        tone: "success",
+        text: session
+          ? "Phone verified. You can now set up driver tools and choose SMS alerts."
+          : "Phone verified. Your driver account is ready to finish setup.",
+      });
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "That code could not be verified." });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleDriverSetup(event: FormEvent<HTMLFormElement>) {
@@ -78,8 +160,7 @@ export default function Home() {
     setSubmitting(true);
     setNotice(null);
     try {
-      const values = new FormData(event.currentTarget);
-      await initializeDriver(String(values.get("phone") ?? ""));
+      await initializeDriver(smsAlerts);
       setNotice({
         tone: "success",
         text: "Driver profile saved. A super administrator can now verify your account.",
@@ -276,55 +357,162 @@ export default function Home() {
           <p>Driver accounts are identity-managed by Better Auth and verified by the shelter network.</p>
         </div>
         {session ? (
-          <form className="driver-form" onSubmit={handleDriverSetup}>
+          <div className="driver-form">
             <p className="signed-in-copy">
-              Signed in as <strong>{session.user.email}</strong>
+              Signed in as <strong>{session.user.phoneNumber ?? session.user.email}</strong>
               {userRole ? ` · ${userRole.replace("_", " ")}` : ""}
             </p>
-            <label>
-              Mobile number
-              <input name="phone" required inputMode="tel" placeholder="205 555 0100" />
-            </label>
-            <button className="button button-dark" disabled={submitting} type="submit">
-              Save driver profile
-            </button>
-          </form>
+            {session.user.phoneNumberVerified ? (
+              <form className="phone-verify-form" onSubmit={handleDriverSetup}>
+                <p className="verified-phone">Verified phone · {session.user.phoneNumber}</p>
+                <label className="consent-label">
+                  <input
+                    type="checkbox"
+                    checked={smsAlerts}
+                    onChange={(event) => setSmsAlerts(event.target.checked)}
+                  />
+                  Text me when a new ride request is available. Message and data rates may apply. Reply STOP to stop all ShelterConnect texts.
+                </label>
+                <button className="button button-dark" disabled={submitting} type="submit">
+                  Save driver profile
+                </button>
+              </form>
+            ) : (
+              <form className="phone-verify-form" onSubmit={otpSent ? handleVerifyPhoneCode : handleSendPhoneCode}>
+                <p className="signed-in-copy">Verify your phone with a one-time SMS code to finish driver setup.</p>
+                <label>
+                  Mobile number in international format
+                  <input
+                    name="phoneNumber"
+                    required
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="+12055550100"
+                    value={phoneNumber}
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                  />
+                </label>
+                {otpSent && (
+                  <label>
+                    SMS code
+                    <input
+                      name="phoneCode"
+                      required
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={phoneCode}
+                      onChange={(event) => setPhoneCode(event.target.value)}
+                    />
+                  </label>
+                )}
+                <button className="button button-dark" disabled={submitting} type="submit">
+                  {submitting ? "One moment…" : otpSent ? "Verify phone" : "Text me a code"}
+                </button>
+              </form>
+            )}
+          </div>
         ) : (
-          <form className="driver-form" onSubmit={handleAccount}>
-            <div className="auth-toggle" role="tablist" aria-label="Account action">
+          <div className="driver-form">
+            <div className="auth-toggle" role="tablist" aria-label="Sign-in method">
               <button
                 type="button"
-                className={authMode === "sign-up" ? "active" : ""}
-                onClick={() => setAuthMode("sign-up")}
+                className={authMethod === "email" ? "active" : ""}
+                onClick={() => setAuthMethod("email")}
               >
-                Create account
+                Email and password
               </button>
               <button
                 type="button"
-                className={authMode === "sign-in" ? "active" : ""}
-                onClick={() => setAuthMode("sign-in")}
+                className={authMethod === "phone" ? "active" : ""}
+                onClick={() => setAuthMethod("phone")}
               >
-                Sign in
+                Phone by SMS
               </button>
             </div>
-            {authMode === "sign-up" && (
-              <label>
-                Full name
-                <input name="name" required autoComplete="name" placeholder="Alex Morgan" />
-              </label>
+            {authMethod === "email" ? (
+              <form className="phone-verify-form" onSubmit={handleAccount}>
+                <div className="auth-toggle auth-toggle-secondary" role="tablist" aria-label="Account action">
+                  <button
+                    type="button"
+                    className={authMode === "sign-up" ? "active" : ""}
+                    onClick={() => setAuthMode("sign-up")}
+                  >
+                    Create account
+                  </button>
+                  <button
+                    type="button"
+                    className={authMode === "sign-in" ? "active" : ""}
+                    onClick={() => setAuthMode("sign-in")}
+                  >
+                    Sign in
+                  </button>
+                </div>
+                {authMode === "sign-up" && (
+                  <label>
+                    Full name
+                    <input name="name" required autoComplete="name" placeholder="Alex Morgan" />
+                  </label>
+                )}
+                <label>
+                  Email address
+                  <input name="email" required type="email" autoComplete="email" placeholder="alex@example.org" />
+                </label>
+                <label>
+                  Password
+                  <input name="password" required minLength={12} type="password" autoComplete={authMode === "sign-up" ? "new-password" : "current-password"} />
+                </label>
+                <button className="button button-dark" disabled={submitting} type="submit">
+                  {submitting ? "One moment…" : authMode === "sign-up" ? "Join as a driver" : "Sign in"}
+                </button>
+              </form>
+            ) : (
+              <form className="phone-verify-form" onSubmit={otpSent ? handleVerifyPhoneCode : handleSendPhoneCode}>
+                <p className="signed-in-copy">Sign in or create a driver account with a verified phone number.</p>
+                {!otpSent && (
+                  <label>
+                    Full name <span className="optional-label">for new accounts</span>
+                    <input
+                      name="phoneName"
+                      autoComplete="name"
+                      placeholder="Alex Morgan"
+                      value={phoneName}
+                      onChange={(event) => setPhoneName(event.target.value)}
+                    />
+                  </label>
+                )}
+                <label>
+                  Mobile number in international format
+                  <input
+                    name="phoneNumber"
+                    required
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="+12055550100"
+                    value={phoneNumber}
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                  />
+                </label>
+                {otpSent && (
+                  <label>
+                    SMS code
+                    <input
+                      name="phoneCode"
+                      required
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={phoneCode}
+                      onChange={(event) => setPhoneCode(event.target.value)}
+                    />
+                  </label>
+                )}
+                <button className="button button-dark" disabled={submitting} type="submit">
+                  {submitting ? "One moment…" : otpSent ? "Verify and continue" : "Text me a code"}
+                </button>
+              </form>
             )}
-            <label>
-              Email address
-              <input name="email" required type="email" autoComplete="email" placeholder="alex@example.org" />
-            </label>
-            <label>
-              Password
-              <input name="password" required minLength={8} type="password" autoComplete={authMode === "sign-up" ? "new-password" : "current-password"} />
-            </label>
-            <button className="button button-dark" disabled={submitting} type="submit">
-              {submitting ? "One moment…" : authMode === "sign-up" ? "Join as a driver" : "Sign in"}
-            </button>
-          </form>
+          </div>
         )}
       </section>
 

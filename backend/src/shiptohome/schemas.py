@@ -13,6 +13,8 @@ class APIModel(BaseModel):
 class CurrentUser(APIModel):
     id: str
     role: Literal["driver", "shelter_admin", "super_admin"]
+    phone_number: str | None = None
+    phone_number_verified: bool = False
 
 
 class ShelterOut(APIModel):
@@ -41,11 +43,11 @@ class ShelterAssignmentCreate(APIModel):
 
 
 class DriverInitialize(APIModel):
-    phone_number: str = Field(min_length=7, max_length=32)
+    sms_notifications_enabled: bool = False
 
 
 class DriverUpdate(APIModel):
-    phone_number: str = Field(min_length=7, max_length=32)
+    sms_notifications_enabled: bool
 
 
 class DriverAvailabilityUpdate(APIModel):
@@ -62,6 +64,7 @@ class DriverOut(APIModel):
     phone_number: str
     is_verified: bool
     is_available: bool
+    sms_notifications_enabled: bool
 
 
 class RideCreate(APIModel):

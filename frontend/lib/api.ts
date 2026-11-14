@@ -20,6 +20,15 @@ export type RideCreated = {
   tracking_token: string;
 };
 
+export type DriverProfile = {
+  id: number;
+  auth_user_id: string;
+  phone_number: string;
+  is_verified: boolean;
+  is_available: boolean;
+  sms_notifications_enabled: boolean;
+};
+
 type ApiOptions = RequestInit & { authenticated?: boolean };
 
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
@@ -65,11 +74,24 @@ export function requestRide(payload: {
   });
 }
 
-export function initializeDriver(phone_number: string) {
+export function getDriverProfile() {
+  return apiFetch<DriverProfile>("/api/drivers/me", { authenticated: true });
+}
+
+export function initializeDriver(sms_notifications_enabled: boolean) {
   return apiFetch("/api/drivers/me/initialize", {
     method: "POST",
     authenticated: true,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone_number }),
+    body: JSON.stringify({ sms_notifications_enabled }),
+  });
+}
+
+export function updateDriverPreferences(sms_notifications_enabled: boolean) {
+  return apiFetch<DriverProfile>("/api/drivers/me", {
+    method: "PATCH",
+    authenticated: true,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sms_notifications_enabled }),
   });
 }

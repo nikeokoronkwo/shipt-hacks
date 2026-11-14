@@ -9,7 +9,7 @@ from collections.abc import Generator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Select, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -36,6 +36,7 @@ from shiptohome.schemas import (
     ShelterUpdate,
 )
 from shiptohome.seed import seed_demo_shelters
+from shiptohome.sms import send_sms
 
 
 def utcnow() -> datetime:
@@ -89,6 +90,40 @@ def require_eligible_driver(db: Session, user: CurrentUser) -> Driver:
     if not driver.is_available:
         raise HTTPException(status_code=403, detail="Set yourself online before viewing requests.")
     return driver
+
+
+def notify_available_drivers(shelter_name: str) -> None:
+    """Send a minimal alert only to verified, online, opted-in drivers."""
+    with SessionLocal() as db:
+        phone_numbers = db.scalars(
+            select(Driver.phone_number).where(
+                Driver.is_verified.is_(True),
+                Driver.is_available.is_(True),
+                Driver.sms_notifications_enabled.is_(True),
+                ~Driver.rides.any(RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS"))),
+            )
+        )
+        recipients = list(phone_numbers)
+
+    message = (
+        f"ShelterConnect: A ride request is available for {shelter_name}. "
+        "Sign in to review details. Reply STOP to stop all ShelterConnect texts."
+    )
+    unsubscribed_numbers = [
+        phone_number
+        for phone_number in recipients
+        if send_sms(phone_number, message) == "unsubscribed"
+    ]
+    if unsubscribed_numbers:
+        # Twilio blocks future sends after STOP. Mirror that choice locally so
+        # the app also stops attempting alerts to opted-out numbers.
+        with SessionLocal() as db:
+            db.execute(
+                update(Driver)
+                .where(Driver.phone_number.in_(unsubscribed_numbers))
+                .values(sms_notifications_enabled=False)
+            )
+            db.commit()
 
 
 def public_ride(ride: RideRequest) -> RidePublicOut:
@@ -192,10 +227,23 @@ def initialize_driver(
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
+    if not user.phone_number or not user.phone_number_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Verify your phone number with an SMS code before setting up a driver profile.",
+        )
     existing = db.scalar(select(Driver).where(Driver.auth_user_id == user.id))
     if existing is not None:
+        existing.phone_number = user.phone_number
+        existing.sms_notifications_enabled = payload.sms_notifications_enabled
+        db.commit()
+        db.refresh(existing)
         return existing
-    driver = Driver(auth_user_id=user.id, phone_number=payload.phone_number)
+    driver = Driver(
+        auth_user_id=user.id,
+        phone_number=user.phone_number,
+        sms_notifications_enabled=payload.sms_notifications_enabled,
+    )
     db.add(driver)
     try:
         db.commit()
@@ -221,7 +269,10 @@ def update_my_driver(
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
     driver = get_driver_or_404(db, user.id)
-    driver.phone_number = payload.phone_number
+    if not user.phone_number or not user.phone_number_verified:
+        raise HTTPException(status_code=403, detail="Verify your phone number before updating driver settings.")
+    driver.phone_number = user.phone_number
+    driver.sms_notifications_enabled = payload.sms_notifications_enabled
     db.commit()
     db.refresh(driver)
     return driver
@@ -261,7 +312,11 @@ def set_driver_verification(
 
 
 @app.post("/api/rides", response_model=RideCreated, status_code=status.HTTP_201_CREATED)
-def create_ride(payload: RideCreate, db: Session = Depends(get_db)) -> RideCreated:
+def create_ride(
+    payload: RideCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+) -> RideCreated:
     shelter = get_shelter_or_404(db, payload.shelter_id)
     if shelter.available_beds <= 0:
         raise HTTPException(
@@ -277,6 +332,7 @@ def create_ride(payload: RideCreate, db: Session = Depends(get_db)) -> RideCreat
     db.add(ride)
     db.commit()
     db.refresh(ride)
+    background_tasks.add_task(notify_available_drivers, shelter.name)
     return RideCreated(id=ride.id, status=ride.status, tracking_token=tracking_token)
 
 
@@ -354,6 +410,7 @@ def accept_ride(
         )
         if result.rowcount != 1:
             raise HTTPException(status_code=409, detail="This ride is no longer available.")
+        driver.is_available = False
         db.commit()
     except HTTPException:
         db.rollback()

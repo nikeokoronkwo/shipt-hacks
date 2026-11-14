@@ -1,8 +1,14 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import { getMigrations } from "better-auth/db/migration";
 
-import { auth } from "../lib/auth";
-
 async function main() {
+  const rootEnvFile = path.resolve(process.cwd(), "..", ".env");
+  if (existsSync(rootEnvFile)) process.loadEnvFile(rootEnvFile);
+  const { assertAuthConfiguration, auth } = await import("../lib/auth");
+  assertAuthConfiguration();
+
   const migration = await getMigrations(auth.options, { throwOnUnsafe: true });
 
   if (migration.schemaProblems.length > 0) {
