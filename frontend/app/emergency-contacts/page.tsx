@@ -1,0 +1,11 @@
+import { ArrowUpRight, Heart, LifeBuoy, Phone, ShieldAlert } from "lucide-react";
+
+export const metadata = { title: "Emergency contacts & support" };
+
+export default function Page() {
+  return <section className="container-wide py-12 sm:py-16"><p className="eyebrow mb-5">You don’t have to navigate this alone</p><h1 className="page-title max-w-2xl">A real person.<br />A place to start.</h1><p className="mb-10 mt-6 max-w-xl text-sm leading-8 text-muted">The numbers below connect to real US services. Wayfinder is a frontend demo, not a staffed dispatch or emergency service.</p><div className="grid gap-5 md:grid-cols-3">{[
+    { n: "911", title: "Immediate danger", description: "For a medical emergency, fire, or an immediate threat to your safety, call emergency services.", icon: ShieldAlert, label: "Call 911", color: "text-[#fc827a]" },
+    { n: "211", title: "Local community resources", description: "Ask about local housing, shelter, food, and community support resources in the Birmingham area.", icon: LifeBuoy, label: "Call 211", color: "text-accent" },
+    { n: "988", title: "Suicide & crisis support", description: "Call or text the 988 Suicide & Crisis Lifeline for support with a mental health or suicide crisis.", icon: Heart, label: "Call 988", color: "text-gold" },
+  ].map(({ n, title, description, icon: Icon, label, color }) => <article key={n} className="panel flex flex-col p-7"><Icon className={`mb-8 ${color}`} size={30} strokeWidth={1.3} /><h2 className="font-serif text-2xl">{title}</h2><p className={`my-5 font-serif text-5xl ${color}`}>{n}</p><p className="mb-7 flex-1 text-sm leading-7 text-muted">{description}</p><a className="btn btn-secondary" href={`tel:${n}`}><Phone size={16} />{label}<ArrowUpRight size={15} /></a>{n === "988" && <a className="mt-4 text-center text-xs text-accent underline" href="sms:988">Text 988 instead</a>}</article>)}</div><div className="mt-8 rounded-xl border border-line p-6"><h2 className="font-serif text-xl">Before you travel to a shelter</h2><p className="mt-3 max-w-3xl text-sm leading-7 text-muted">Confirm intake hours, eligibility, accessibility, and current availability directly with a real provider. An available bed is not a reservation or guaranteed admission. All facility listings elsewhere in this demo are fictional.</p></div></section>;
+}
