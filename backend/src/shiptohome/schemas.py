@@ -100,6 +100,7 @@ class RidePublicOut(APIModel):
     accepted_at: datetime | None
     completed_at: datetime | None
     driver_assigned: bool
+    shelter_name: str
 
 
 class DriverRideRequest(APIModel):
@@ -119,8 +120,11 @@ class RideAssignedOut(APIModel):
     pickup_longitude: float | None
     pickup_address: str | None
     shelter_id: int
+    shelter_name: str
+    shelter_address: str
     status: str
     accepted_at: datetime | None
+    completed_at: datetime | None = None
 
 
 class RideStatusUpdate(APIModel):

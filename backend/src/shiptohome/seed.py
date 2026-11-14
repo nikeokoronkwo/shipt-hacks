@@ -6,43 +6,71 @@ from sqlalchemy.orm import Session
 from shiptohome.models import Shelter
 
 
+# Fictional Birmingham fixtures. Names must stay in sync with
+# frontend/lib/demo-data.ts: the shelter pages resolve live records by name.
 DEMO_SHELTERS = [
     {
-        "name": "Five Points Welcome Center",
-        "address": "1820 11th Avenue South, Birmingham, AL",
-        "latitude": 33.5015,
-        "longitude": -86.8007,
-        "total_beds": 48,
+        "name": "Downtown Community Shelter",
+        "address": "Downtown, Birmingham, AL",
+        "latitude": 33.516,
+        "longitude": -86.809,
+        "total_beds": 40,
         "available_beds": 12,
         "food_available": True,
-        "services": ["Hot meals", "Showers", "Laundry"],
+        "services": ["ADA Accessible", "Meals"],
     },
     {
-        "name": "Northside Night Shelter",
-        "address": "501 43rd Street North, Birmingham, AL",
-        "latitude": 33.5445,
-        "longitude": -86.8123,
-        "total_beds": 35,
+        "name": "Northside Welcome Center",
+        "address": "Northside, Birmingham, AL",
+        "latitude": 33.531,
+        "longitude": -86.815,
+        "total_beds": 30,
+        "available_beds": 8,
+        "food_available": True,
+        "services": ["ADA Accessible", "Meals"],
+    },
+    {
+        "name": "Southside Community House",
+        "address": "Southside, Birmingham, AL",
+        "latitude": 33.501,
+        "longitude": -86.797,
+        "total_beds": 20,
         "available_beds": 5,
         "food_available": True,
-        "services": ["Dinner", "Case management", "Storage"],
+        "services": ["Women Only", "Meals"],
     },
     {
-        "name": "East Lake Family Resource Hub",
-        "address": "7401 1st Avenue North, Birmingham, AL",
-        "latitude": 33.5608,
-        "longitude": -86.7354,
-        "total_beds": 24,
-        "available_beds": 8,
+        "name": "Avondale Family Shelter",
+        "address": "Avondale, Birmingham, AL",
+        "latitude": 33.525,
+        "longitude": -86.774,
+        "total_beds": 36,
+        "available_beds": 15,
         "food_available": False,
-        "services": ["Family rooms", "Child care referrals", "Clothing"],
+        "services": ["Pet Friendly", "Family Units", "ADA Accessible"],
+    },
+    {
+        "name": "Eastside Safe Rest",
+        "address": "East Lake, Birmingham, AL",
+        "latitude": 33.556,
+        "longitude": -86.747,
+        "total_beds": 18,
+        "available_beds": 0,
+        "food_available": False,
+        "services": ["Pet Friendly"],
     },
 ]
 
 
 def seed_demo_shelters(db: Session) -> None:
-    """Seed clearly labelled demo records once, without touching auth tables."""
-    if db.scalar(select(Shelter.id).limit(1)) is not None:
+    """Add any missing demo shelters by name, without touching auth tables.
+
+    Existing rows are never overwritten, so shelter admins' bed counts survive
+    restarts and older local databases simply gain the newer fixtures.
+    """
+    existing = set(db.scalars(select(Shelter.name)))
+    missing = [shelter for shelter in DEMO_SHELTERS if shelter["name"] not in existing]
+    if not missing:
         return
-    db.add_all(Shelter(**shelter) for shelter in DEMO_SHELTERS)
+    db.add_all(Shelter(**shelter) for shelter in missing)
     db.commit()

@@ -10,6 +10,12 @@ export async function sendSms({ to, body }: SmsMessage): Promise<void> {
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
 
   if (!accountSid || !authToken || !fromNumber) {
+    if (process.env.NODE_ENV !== "production" && process.env.SMS_DEV_CONSOLE === "true") {
+      // LOCAL DEVELOPMENT ONLY: print the message (including any OTP) to the
+      // Next.js terminal so driver sign-up can be tested without Twilio.
+      console.warn(`[dev sms] To ${to}: ${body}`);
+      return;
+    }
     throw new Error("Twilio SMS is not configured. Set the TWILIO_* environment variables.");
   }
 

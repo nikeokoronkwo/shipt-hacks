@@ -83,6 +83,28 @@ def get_driver_or_404(db: Session, auth_user_id: str) -> Driver:
     return driver
 
 
+def driver_auto_verify_enabled() -> bool:
+    """LOCAL DEMO ONLY: let new drivers skip manual super-admin verification."""
+    return os.getenv("DRIVER_AUTO_VERIFY", "").strip().lower() in {"1", "true", "yes"}
+
+
+def assigned_ride(ride: RideRequest) -> RideAssignedOut:
+    return RideAssignedOut(
+        id=ride.id,
+        first_name=ride.first_name,
+        last_name=ride.last_name,
+        pickup_latitude=ride.pickup_latitude,
+        pickup_longitude=ride.pickup_longitude,
+        pickup_address=ride.pickup_address,
+        shelter_id=ride.shelter_id,
+        shelter_name=ride.shelter.name,
+        shelter_address=ride.shelter.address,
+        status=ride.status,
+        accepted_at=ride.accepted_at,
+        completed_at=ride.completed_at,
+    )
+
+
 def require_eligible_driver(db: Session, user: CurrentUser) -> Driver:
     driver = get_driver_or_404(db, user.id)
     if not driver.is_verified:
@@ -135,6 +157,7 @@ def public_ride(ride: RideRequest) -> RidePublicOut:
         accepted_at=ride.accepted_at,
         completed_at=ride.completed_at,
         driver_assigned=ride.driver_id is not None,
+        shelter_name=ride.shelter.name,
     )
 
 
@@ -243,6 +266,7 @@ def initialize_driver(
         auth_user_id=user.id,
         phone_number=user.phone_number,
         sms_notifications_enabled=payload.sms_notifications_enabled,
+        is_verified=driver_auto_verify_enabled(),
     )
     db.add(driver)
     try:
@@ -278,6 +302,23 @@ def update_my_driver(
     return driver
 
 
+@app.get("/api/drivers/me/active-ride", response_model=RideAssignedOut | None)
+def get_my_active_ride(
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(require_role("driver")),
+) -> RideAssignedOut | None:
+    driver = get_driver_or_404(db, user.id)
+    ride = db.scalar(
+        select(RideRequest)
+        .options(joinedload(RideRequest.shelter))
+        .where(
+            RideRequest.driver_id == driver.id,
+            RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS")),
+        )
+    )
+    return assigned_ride(ride) if ride is not None else None
+
+
 @app.patch("/api/drivers/me/availability", response_model=DriverOut)
 def update_driver_availability(
     payload: DriverAvailabilityUpdate,
@@ -287,6 +328,15 @@ def update_driver_availability(
     driver = get_driver_or_404(db, user.id)
     if payload.is_available and not driver.is_verified:
         raise HTTPException(status_code=403, detail="Only verified drivers can go online.")
+    if payload.is_available:
+        active_ride = db.scalar(
+            select(RideRequest.id).where(
+                RideRequest.driver_id == driver.id,
+                RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS")),
+            )
+        )
+        if active_ride is not None:
+            raise HTTPException(status_code=409, detail="Finish your active ride before going online.")
     driver.is_available = payload.is_available
     db.commit()
     db.refresh(driver)
@@ -422,7 +472,7 @@ def accept_ride(
     ride = db.get(RideRequest, ride_id)
     if ride is None:  # Defensive: the conditional update above succeeded.
         raise HTTPException(status_code=404, detail="Ride not found.")
-    return RideAssignedOut.model_validate(ride)
+    return assigned_ride(ride)
 
 
 @app.patch("/api/rides/{ride_id}/status", response_model=RideAssignedOut)
@@ -448,6 +498,9 @@ def update_ride_status(
     ride.status = payload.status
     if payload.status == "COMPLETED":
         ride.completed_at = utcnow()
+    if payload.status in {"COMPLETED", "CANCELLED"}:
+        # Put the driver back in the pool once their ride is finished.
+        driver.is_available = driver.is_verified
     db.commit()
     db.refresh(ride)
-    return RideAssignedOut.model_validate(ride)
+    return assigned_ride(ride)

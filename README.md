@@ -51,6 +51,29 @@ cd backend && uv run uvicorn main:app --reload --port 8000
 Open <http://localhost:3000>. The FastAPI startup creates and seeds application
 tables; `pnpm auth:migrate` creates Better Auth's own tables.
 
+### Driver sign-up and ride matching
+
+1. **Driver sign-up** — `/become-a-driver`: create an account (email + password,
+   or phone by SMS), verify a mobile number with a one-time code, then finish
+   the driver profile (`POST /api/drivers/me/initialize`).
+2. **Driver dashboard** — `/driver-profile`: go online, toggle SMS alerts, and
+   see open ride requests (polled every 10 s).
+3. **Rider finds a driver** — open a shelter from `/find-shelter`, choose
+   "Request a ride here", and the request is posted to `POST /api/rides`. The
+   rider lands on `/track-ride`, which polls the ride's status with its private
+   tracking token.
+4. **Driver accepts** — the driver accepts from the dashboard or
+   `/driver/requests/<id>`, then marks the ride started and completed. Finishing
+   a ride puts the driver back online.
+
+For local testing without Twilio, `.env.example` enables two **local demo
+only** switches: `SMS_DEV_CONSOLE=true` prints SMS messages (including sign-in
+codes) in the Next.js terminal, and `DRIVER_AUTO_VERIFY=true` marks new driver
+profiles verified so they can go online right away. Unset both in any shared or
+deployed environment; drivers then need verification by a super administrator
+(`PATCH /api/admin/drivers/{id}/verification`) or, on a disposable local
+database, `uv run python scripts/verify_demo_driver.py <user-id> --demo`.
+
 ## One SQLite database, two table owners
 
 Both processes default to `data/shelterconnect.sqlite3`. To relocate it, set the
@@ -101,6 +124,6 @@ and role via `/api/auth/jwks`.
 From the repository root:
 
 ```sh
-cd backend && uv run python -m unittest discover -s tests -v
-cd ../frontend && pnpm lint
+cd backend && uv run python -m unittest tests.test_auth tests.test_database tests.test_main_driver_flow -v
+cd ../frontend && pnpm lint && pnpm typecheck
 ```
