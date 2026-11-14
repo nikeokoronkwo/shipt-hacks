@@ -2,37 +2,40 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Car, Check, MapPin, ShieldCheck } from "lucide-react";
-import { NeighborhoodMap } from "@/components/neighborhood-map";
-import { shelters } from "@/lib/demo-data";
+import { apiFetch } from "@/lib/api";
+import { readRide } from "@/lib/ride-session";
 
-type Ride = { id: string; shelterId: number; status: string };
-const statuses = ["PENDING", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
-const descriptions: Record<string, string> = { PENDING: "Looking for a helping hand.", ACCEPTED: "A volunteer is on the way.", IN_PROGRESS: "On your way to somewhere safe.", COMPLETED: "Your demo journey is complete." };
-
+type Ride = { id: number; shelter_id: number; status: string; driver_assigned: boolean };
+const descriptions: Record<string, string> = {
+  PENDING: "Waiting for a volunteer driver.", ACCEPTED: "A volunteer has accepted your request.",
+  IN_PROGRESS: "Your ride is in progress.", COMPLETED: "Your ride is complete.", CANCELLED: "Your request was cancelled.",
+};
 export function RideTracker() {
   const [ride, setRide] = useState<Ride | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
-    // Read after mount to avoid SSR hydration differences.
-    const timer = setTimeout(() => {
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    async function refresh() {
       try {
-        const value = JSON.parse(sessionStorage.getItem("wayfinder-demo-ride") || "null");
-        if (value && typeof value.id === "string" && shelters.some(s => s.id === value.shelterId) && statuses.includes(value.status)) setRide(value);
-      } catch { setError("No saved demo ride could be read. Start a new request below."); }
-      setReady(true);
-    }, 0);
-    return () => clearTimeout(timer);
+        const saved = readRide();
+        if (!saved) return;
+        const data = await apiFetch<Ride>(`/api/rides/${saved.id}`, {
+          headers: { "X-Tracking-Token": saved.tracking_token }, cache: "no-store",
+        });
+        if (active) { setRide(data); setError(""); }
+        if (active && !["COMPLETED", "CANCELLED"].includes(data.status)) timer = setTimeout(refresh, 4000);
+      } catch (error) {
+        if (active) { setError(error instanceof Error ? error.message : "Could not read ride."); timer = setTimeout(refresh, 4000); }
+      } finally { if (active) setReady(true); }
+    }
+    void refresh();
+    return () => { active = false; clearTimeout(timer); };
   }, []);
-  const shelter = shelters.find(s => s.id === ride?.shelterId);
-  function advance() {
-    if (!ride) return;
-    const next = { ...ride, status: statuses[Math.min(statuses.indexOf(ride.status) + 1, statuses.length - 1)] };
-    try { sessionStorage.setItem("wayfinder-demo-ride", JSON.stringify(next)); setRide(next); }
-    catch { setError("Browser storage is unavailable. The demo status could not be saved."); }
-  }
-  return <section className="container-wide py-12"><p className="eyebrow mb-3">A little peace of mind</p><h1 className="page-title">Your ride, one step at a time.</h1><p className="mb-8 mt-4 text-sm text-muted">Frontend preview only. No driver is dispatched and no live GPS is collected.</p>{error && <p role="alert" className="mb-5 text-sm text-gold">{error}</p>}
-    {!ready ? <p role="status" className="panel p-8">Loading demo ride…</p> : !ride ? <div className="panel mx-auto my-10 max-w-xl p-10 text-center"><Car className="mx-auto mb-5 text-accent" size={36} strokeWidth={1.3} /><h2 className="font-serif text-3xl">Your next step starts here.</h2><p className="my-5 text-sm leading-7 text-muted">There isn’t a demo ride in this browser session yet. Choose a shelter to try the request and tracking flow.</p><Link href="/find-shelter" className="btn btn-primary">Find a shelter <ArrowRight size={16} /></Link></div> : <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr]"><div className="space-y-5"><div className="panel p-7"><span className="chip bg-accent/10 text-accent">Demo · {ride.status.replaceAll("_", " ")}</span><h2 className="my-5 font-serif text-3xl">{descriptions[ride.status]}</h2><p className="break-all text-xs text-muted">Reference: {ride.id}</p><ol className="mt-8 space-y-6">{statuses.map((status, i) => <li key={status} className={`flex items-center gap-3 text-sm ${i <= statuses.indexOf(ride.status) ? "text-accent" : "text-muted"}`}><span className="flex size-7 items-center justify-center rounded-full border border-current text-xs">{i < statuses.indexOf(ride.status) ? <Check size={14} /> : i + 1}</span>{["Request created", "Driver accepts", "Ride in progress", "Trip completed"][i]}</li>)}</ol></div><div className="panel p-6"><p className="eyebrow mb-3">Demo destination</p><p className="flex items-start gap-2 text-sm"><MapPin size={17} className="shrink-0 text-accent" />{shelter?.name}</p><p className="mt-4 text-xs leading-6 text-muted">Shelter admission is not confirmed by this request.</p></div><div className="rounded-xl border border-dashed border-line p-5"><p className="mb-4 text-xs leading-6 text-gold">Demo controls: manually preview each state. These buttons do not update a real ride.</p><button onClick={advance} disabled={ride.status === "COMPLETED"} className="btn btn-secondary w-full">{ride.status === "COMPLETED" ? "Demo complete" : "Preview next status"}<ArrowRight size={15} /></button></div></div><div><NeighborhoodMap className="h-[500px] rounded-2xl border border-line" selected={ride.shelterId} /><p className="mt-4 flex items-center gap-2 text-xs text-muted"><ShieldCheck size={15} />Birmingham map, not live vehicle tracking or navigation.</p></div></div>}
+  return <section className="container-wide max-w-3xl space-y-6 py-12"><h1 className="page-title">Your ride, one step at a time.</h1>
+    {error && <p role="alert" className="text-gold">Status unavailable: {error}. Any displayed status may be out of date.</p>}
+    {!ready ? <p role="status">Loading ride…</p> : !ride ? <div className="panel space-y-4 p-8"><p>No ride status is available in this browser tab.</p><Link href="/find-shelter" className="text-accent">Find a shelter</Link></div> :
+      <div className="panel space-y-5 p-8"><p className="text-xs text-muted">Request #{ride.id}</p><p role="status" className="text-accent">{ride.status.replaceAll("_", " ")}</p><h2 className="font-serif text-3xl">{descriptions[ride.status] || ride.status}</h2><p>{ride.driver_assigned ? "Driver assigned" : "No driver assigned yet"}</p><Link href={`/shelter-details/${ride.shelter_id}`} className="text-accent">View destination shelter →</Link><p className="text-xs text-muted">Status updates automatically. This is not live vehicle GPS tracking. Shelter admission is not confirmed. Your tracking token is private and is never included in the URL.</p></div>}
   </section>;
 }
