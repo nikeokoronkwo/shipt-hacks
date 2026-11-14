@@ -354,6 +354,19 @@ def get_public_ride(
     return public_ride(ride)
 
 
+@app.get("/api/drivers/me/active-ride", response_model=RideAssignedOut | None)
+def active_driver_ride(
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(require_role("driver")),
+) -> RideAssignedOut | None:
+    driver = get_driver_or_404(db, user.id)
+    ride = db.scalar(select(RideRequest).where(
+        RideRequest.driver_id == driver.id,
+        RideRequest.status.in_(("ACCEPTED", "IN_PROGRESS")),
+    ))
+    return RideAssignedOut.model_validate(ride) if ride else None
+
+
 @app.get("/api/drivers/requests", response_model=list[DriverRideRequest])
 def driver_requests(
     db: Session = Depends(get_db),

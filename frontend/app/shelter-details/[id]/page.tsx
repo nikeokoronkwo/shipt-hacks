@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ShelterDetails } from "@/components/shelter-details";
-import { shelters } from "@/lib/demo-data";
-export function generateStaticParams() { return shelters.map(s => ({ id: String(s.id) })); }
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) { const { id } = await params; return { title: shelters.find(s => String(s.id) === id)?.name ?? "Shelter not found" }; }
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+
+type Props = { params: Promise<{ id: string }> };
+export default function Page({ params }: Props) {
+  return <Suspense fallback={<p role="status" className="container-wide py-12">Loading shelter…</p>}><Details params={params} /></Suspense>;
+}
+async function Details({ params }: Props) {
   const { id } = await params;
-  const shelter = shelters.find(s => String(s.id) === id);
-  if (!shelter) notFound();
-  return <ShelterDetails shelter={shelter} />;
+  const shelterId = Number(id);
+  if (!Number.isSafeInteger(shelterId) || shelterId <= 0) notFound();
+  return <ShelterDetails id={shelterId} />;
 }
