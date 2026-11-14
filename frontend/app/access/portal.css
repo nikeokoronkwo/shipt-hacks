@@ -24,6 +24,10 @@ button:disabled { cursor: wait; opacity: 0.68; }
 .topbar, .hero, .shelter-section, .request-layout, .driver-section, footer { max-width: 1240px; margin: 0 auto; }
 
 .topbar { height: 88px; display: flex; align-items: center; gap: 24px; padding: 0 32px; }
+.portal-navigation { position: sticky; top: 0; z-index: 40; display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 16px max(20px, calc((100% - 1176px) / 2)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); }
+.portal-navigation a { color: var(--moss-dark); font-size: .82rem; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.portal-navigation a:hover { color: var(--clay); }
+.portal-navigation a:focus-visible { outline: 2px solid var(--moss); outline-offset: 4px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 800; letter-spacing: -0.04em; font-size: 1.15rem; }
 .brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 50% 50% 50% 8px; color: var(--paper-light); background: var(--clay); font-family: Georgia, serif; transform: rotate(-20deg); }
 .connection-pill { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; font-size: .78rem; font-weight: 700; color: var(--moss); background: #e3ebdd; padding: 8px 12px; border-radius: 999px; }

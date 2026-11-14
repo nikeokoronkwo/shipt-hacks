@@ -1,4 +1,4 @@
-# ShelterConnect web app
+# Hermes web app
 
 This Next.js app hosts the Better Auth API at `/api/auth/*` and provides the
 public shelter, ride-request, and driver sign-in UI. FastAPI owns business

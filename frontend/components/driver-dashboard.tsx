@@ -1,30 +1,107 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { ArrowRight, ArrowUpRight, Car, CheckCircle2, MapPin, MessageSquare, ShieldCheck, UserRound } from "lucide-react";
-import { NeighborhoodMap } from "@/components/neighborhood-map";
+import { useEffect, useState } from "react";
+import { apiFetch, getDriverProfile, updateDriverPreferences, type DriverProfile } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
+
+type PendingRide = { id: number; pickup_area: string; shelter_id: number; shelter_name: string };
+type AssignedRide = { id: number; first_name: string; last_name: string; pickup_address: string | null; pickup_latitude: number | null; pickup_longitude: number | null; shelter_id: number; status: string };
+const protectedOptions = { authenticated: true, cache: "no-store" as const };
+function mutation<T>(path: string, method: string, body?: object) {
+  return apiFetch<T>(path, { ...protectedOptions, method, headers: { "Content-Type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}) });
+}
 
 export function DriverDashboard() {
-  const [available, setAvailable] = useState(false);
-  const [sms, setSms] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState("Alex Morgan");
-  return <section className="container-wide py-12"><div className="mb-8 flex flex-wrap items-end justify-between gap-5"><div><p className="eyebrow mb-3">Volunteer driver · Demo dashboard</p><h1 className="page-title">Welcome back, {name.split(" ")[0]}.</h1><p className="mt-4 text-sm text-muted">Small journeys. Real possibilities.</p></div><span className="chip text-gold">Preview account · No real dispatch</span></div>
-    <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]"><div className="space-y-6"><div className="panel flex flex-wrap items-center gap-5 p-6"><span className="flex size-16 items-center justify-center rounded-t-full rounded-b-xl bg-raised text-accent"><UserRound size={34} strokeWidth={1.2} /></span><div className="flex-1"><h2 className="font-serif text-2xl">{name}</h2><p className="mt-1 text-xs text-muted">Birmingham community volunteer · Fictional profile</p></div><button onClick={() => setEditing(!editing)} className="chip">Edit demo profile</button>{editing && <form onSubmit={e => { e.preventDefault(); setEditing(false); }} className="flex w-full gap-3"><label className="flex-1 text-xs text-muted">Demo display name<input required className="field mt-2" value={name} onChange={e => setName(e.target.value)} maxLength={60} /></label><button className="btn btn-secondary self-end">Done</button></form>}</div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[["24", "Demo trips"], ["128", "Sample miles"], ["18", "Shelter drop-offs"], ["36", "Sample hours"]].map(([n, label]) => <div className="panel p-5" key={label}><p className="font-serif text-3xl text-accent">{n}</p><p className="mt-2 text-[11px] text-muted">{label}</p></div>)}</div>
-      <div className="panel p-6"><div className="mb-6 flex items-center justify-between"><h2 className="font-serif text-2xl">Nearby ride requests</h2><span className="text-xs text-muted">Demo</span></div>{available ? <Link href="/driver/requests/123" className="block rounded-xl border border-line bg-background p-5 hover:border-accent"><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm"><MapPin size={17} className="text-accent" />Downtown Birmingham</span><ArrowUpRight size={17} className="text-accent" /></div><p className="mt-3 text-xs text-muted">To Downtown Community Shelter · General pickup area</p><p className="mt-4 text-xs text-accent">View sample request →</p></Link> : <div className="rounded-xl border border-dashed border-line p-8 text-center"><Car size={28} strokeWidth={1.3} className="mx-auto mb-3 text-muted" /><p className="text-sm">Take a breather. You’re offline.</p><p className="mt-2 text-xs text-muted">Switch your demo availability on to preview requests.</p></div>}</div>
-      <div className="panel p-6"><h2 className="mb-5 font-serif text-2xl">Recent journeys</h2>{[["Downtown → Community Shelter", "2.4 sample miles · 25 min"], ["Northside → Welcome Center", "1.8 sample miles · 18 min"], ["Avondale → Family Shelter", "3.2 sample miles · 30 min"]].map(([title, sub]) => <div key={title} className="flex items-center gap-4 border-t border-line py-4"><CheckCircle2 size={22} strokeWidth={1.4} className="text-accent" /><div className="flex-1"><p className="text-sm">{title}</p><p className="mt-1 text-xs text-muted">{sub}</p></div><span className="text-[10px] text-muted">Demo trip</span></div>)}</div>
-    </div><aside className="space-y-6"><div className="panel p-6"><h2 className="font-serif text-2xl">Your availability</h2><p className="mb-6 mt-3 text-xs leading-6 text-muted">Choose when you’re ready to lend a hand. Demo settings reset when you leave this page.</p><Toggle checked={available} onChange={setAvailable} label={available ? "Online · Demo requests visible" : "Offline · Not accepting requests"} /><div className="mt-6 border-t border-line pt-6"><div className="mb-4 flex items-center gap-2 text-sm"><MessageSquare size={17} className="text-accent" />Ride-request text alerts</div><Toggle checked={sms} onChange={setSms} label="Opt in to SMS notifications" /><p className="mt-3 text-[11px] leading-6 text-muted">Preview only: no phone number is enrolled and no texts are sent. Live notifications require opt-in and online availability. Reply STOP to opt out of live messages.</p></div></div><NeighborhoodMap className="h-64 rounded-2xl border border-line" /><div className="rounded-xl border border-line p-5"><p className="flex items-center gap-2 text-sm"><ShieldCheck size={18} className="text-accent" />Privacy along the way</p><p className="mt-3 text-xs leading-6 text-muted">Only the general pickup area appears before assignment. Live driver authentication and authorization must be enforced by the backend.</p></div></aside></div>
+  const { data: session, isPending } = authClient.useSession();
+  const [profile, setProfile] = useState<DriverProfile | null>(null);
+  const [requests, setRequests] = useState<PendingRide[]>([]);
+  const [activeRide, setActiveRide] = useState<AssignedRide | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    async function refresh() {
+      try {
+        const profile = await getDriverProfile();
+        const active = await apiFetch<AssignedRide | null>("/api/drivers/me/active-ride", protectedOptions);
+        const pending = profile.is_verified && profile.is_available && !active ? await apiFetch<PendingRide[]>("/api/drivers/requests", protectedOptions) : [];
+        if (!cancelled) { setProfile(profile); setActiveRide(active); setRequests(pending); setError(""); }
+      } catch (error) { if (!cancelled) setError(error instanceof Error ? error.message : "Could not load driver profile."); }
+      finally { if (!cancelled) { setReady(true); timer = setTimeout(refresh, 4000); } }
+    }
+    void refresh();
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [session]);
+  async function change(kind: "availability" | "sms", value: boolean) {
+    setBusy(true); setError("");
+    try {
+      const updated = kind === "sms" ? await updateDriverPreferences(value) : await mutation<DriverProfile>("/api/drivers/me/availability", "PATCH", { is_available: value });
+      setProfile(updated);
+      if (!updated.is_available) setRequests([]);
+    } catch (error) { setError(error instanceof Error ? error.message : "Could not save preference."); }
+    finally { setBusy(false); }
+  }
+  return <section className="container-wide max-w-4xl space-y-6 py-12"><h1 className="page-title">Volunteer driver dashboard</h1>
+    {isPending ? <p>Loading session…</p> : !session ? <Link className="text-accent" href="/access#driver-access">Sign in or register to drive →</Link> : <>
+      <p>Welcome, {session.user.name}. <button className="text-accent underline" onClick={() => authClient.signOut()}>Sign out</button></p>
+      {error && <p role="alert" className="text-gold">{error} <Link href="/access#driver-access" className="underline">Driver account setup</Link></p>}
+      {!ready ? <p role="status">Loading driver profile…</p> : profile && <>
+        <div className="panel space-y-5 p-6"><p>{profile.is_verified ? "Verified driver" : "Awaiting administrator verification"} · {profile.phone_number}</p>
+          <label className="flex gap-3"><input type="checkbox" disabled={busy || !profile.is_verified || !!activeRide} checked={profile.is_available} onChange={e => change("availability", e.target.checked)} />Online · Accepting requests</label>
+          <label className="flex gap-3"><input type="checkbox" disabled={busy} checked={profile.sms_notifications_enabled} onChange={e => change("sms", e.target.checked)} />Opt in to new-ride SMS alerts</label><p className="text-xs text-muted">Alerts require verified, online availability. Message and data rates may apply. Reply STOP to opt out.</p>
+        </div>
+        {activeRide ? <Link className="panel block p-6 text-accent" href={`/driver/requests/${activeRide.id}`}>Resume ride #{activeRide.id} · {activeRide.status} →</Link> : <div className="panel space-y-4 p-6"><h2 className="font-serif text-2xl">Pending ride requests</h2><p className="text-xs text-muted" aria-live="polite">{requests.length} requests · Refreshes every 4 seconds</p>{requests.map(ride => <Link className="block rounded-xl border border-line p-4" key={ride.id} href={`/driver/requests/${ride.id}`}><p>{ride.pickup_area}</p><p className="mt-2 text-sm text-accent">To {ride.shelter_name} →</p></Link>)}{!requests.length && <p className="text-sm text-muted">{profile.is_available ? "No pending requests." : "Go online when you’re ready to help."}</p>}</div>}
+      </>}
+    </>}
   </section>;
 }
 
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
-  return <label className="flex cursor-pointer items-center justify-between gap-4 text-xs"><span>{label}</span><input type="checkbox" role="switch" checked={checked} onChange={e => onChange(e.target.checked)} className="peer sr-only" /><span aria-hidden="true" className={`flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-gold ${checked ? "justify-end bg-accent" : "justify-start bg-line"}`}><span className="size-5 rounded-full bg-background" /></span></label>;
-}
-
 export function DriverRequest({ id }: { id: string }) {
-  const [status, setStatus] = useState("PENDING");
-  const steps = ["PENDING", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
-  return <section className="container-wide max-w-4xl py-12"><Link href="/driver-profile" className="text-xs text-muted">← Driver dashboard</Link><p className="eyebrow mb-4 mt-8">Sample request #{id}</p><h1 className="page-title">A neighbor needs a way there.</h1><div className="panel my-8 p-7"><p className="mb-6 text-xs text-gold">Demo only. Acceptance does not assign a real ride. Live assignment must be atomic and authenticated on the backend.</p><p className="text-xs uppercase tracking-widest text-accent">{status.replaceAll("_", " ")}</p><div className="my-7 space-y-6"><div><p className="mb-2 text-xs text-muted">{status === "PENDING" ? "General pickup area" : "Demo pickup location"}</p><p className="flex items-center gap-2 text-lg"><MapPin size={18} className="text-accent" />Downtown Birmingham{status !== "PENDING" ? " · Sample meeting point" : ""}</p></div><div><p className="mb-2 text-xs text-muted">Demo destination</p><p className="text-lg">Downtown Community Shelter</p><p className="mt-2 text-xs text-muted">Shelter admission is not guaranteed.</p></div></div><button className="btn btn-primary" disabled={status === "COMPLETED"} onClick={() => setStatus(steps[Math.min(steps.indexOf(status) + 1, 3)])}>{({ PENDING: "Accept demo request", ACCEPTED: "Start demo ride", IN_PROGRESS: "Complete demo ride", COMPLETED: "Demo completed" })[status]}<ArrowRight size={16} /></button></div></section>;
+  const [pending, setPending] = useState<PendingRide | null>(null);
+  const [ride, setRide] = useState<AssignedRide | null>(null);
+  const [ready, setReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const active = await apiFetch<AssignedRide | null>("/api/drivers/me/active-ride", protectedOptions);
+        if (active?.id === Number(id)) { if (!cancelled) setRide(active); }
+        else if (active) throw new Error("Finish your active ride before accepting another request.");
+        else {
+          const requests = await apiFetch<PendingRide[]>("/api/drivers/requests", protectedOptions);
+          const request = requests.find(ride => ride.id === Number(id));
+          if (!request) throw new Error("This request is no longer available.");
+          if (!cancelled) setPending(request);
+        }
+      } catch (error) { if (!cancelled) setError(error instanceof Error ? error.message : "Could not load request."); }
+      finally { if (!cancelled) setReady(true); }
+    }
+    void load();
+    return () => { cancelled = true; };
+  }, [id]);
+  async function update(status?: string) {
+    setBusy(true); setError("");
+    try {
+      const updated = await mutation<AssignedRide>(`/api/rides/${id}/${status ? "status" : "accept"}`, status ? "PATCH" : "POST", status ? { status } : undefined);
+      setRide(updated); setPending(null);
+    } catch (error) { setError(error instanceof Error ? error.message : "Could not update ride."); }
+    finally { setBusy(false); }
+  }
+  const terminal = ride && ["COMPLETED", "CANCELLED"].includes(ride.status);
+  return <section className="container-wide max-w-3xl space-y-6 py-12"><Link href="/driver-profile" className="text-accent">← Driver dashboard</Link><h1 className="page-title">Ride request #{id}</h1>
+    {error && <p role="alert" className="text-gold">{error}</p>}
+    {!ready ? <p>Loading request…</p> : (pending || ride) && <div className="panel space-y-5 p-6">
+      <p className="text-accent">{ride?.status || "PENDING"}</p>
+      {ride ? <><h2 className="font-serif text-2xl">{ride.first_name} {ride.last_name}</h2><p>Pickup: {ride.pickup_address || "Shared coordinates"}</p>{ride.pickup_latitude != null && ride.pickup_longitude != null && <p>Latitude: {ride.pickup_latitude} · Longitude: {ride.pickup_longitude}</p>}<Link href={`/shelter-details/${ride.shelter_id}`} className="text-accent">Destination shelter →</Link></> : <><p>General pickup area: {pending?.pickup_area}</p><p>Destination: {pending?.shelter_name}</p><p className="text-xs text-muted">Precise pickup details are available only after assignment.</p></>}
+      {!terminal && <button disabled={busy} className="btn btn-primary" onClick={() => update(ride ? ride.status === "ACCEPTED" ? "IN_PROGRESS" : "COMPLETED" : undefined)}>{busy ? "Saving…" : !ride ? "Accept request" : ride.status === "ACCEPTED" ? "Start ride" : "Complete ride"}</button>}
+      {ride?.status === "ACCEPTED" && <button disabled={busy} className="btn btn-secondary ml-3" onClick={() => update("CANCELLED")}>Cancel ride</button>}
+      <p className="text-xs text-muted">Shelter admission is not guaranteed. Assignment and status transitions are confirmed by the backend.</p>
+    </div>}
+  </section>;
 }

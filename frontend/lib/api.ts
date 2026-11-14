@@ -8,6 +8,9 @@ export type Shelter = {
   id: number;
   name: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
+  updated_at: string;
   total_beds: number;
   available_beds: number;
   food_available: boolean;
@@ -47,12 +50,17 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...request,
     headers: requestHeaders,
+    signal: request.signal ? AbortSignal.any([request.signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000),
+  }).catch((error: unknown) => {
+    if (error instanceof Error && error.name === "TimeoutError") throw new Error("The shelter service took too long to respond. Please try again.");
+    throw error;
   });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as {
-      detail?: string;
+      detail?: string | { msg: string; loc?: (string | number)[] }[];
     } | null;
-    throw new Error(body?.detail ?? `Request failed (${response.status}).`);
+    const detail = body?.detail;
+    throw new Error(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map(item => `${item.loc?.slice(1).join(".") || "Request"}: ${item.msg}`).join("; ") : `Request failed (${response.status}).`);
   }
   return response.json() as Promise<T>;
 }
@@ -64,7 +72,9 @@ export function listShelters() {
 export function requestRide(payload: {
   first_name: string;
   last_name: string;
-  pickup_address: string;
+  pickup_address?: string;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
   shelter_id: number;
 }) {
   return apiFetch<RideCreated>("/api/rides", {

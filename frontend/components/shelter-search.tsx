@@ -1,27 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { ArrowDownUp, ArrowUpRight, BedDouble, MapPin, Search, SlidersHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
+import { listShelters, type Shelter } from "@/lib/api";
 import { NeighborhoodMap } from "@/components/neighborhood-map";
-import { filters, shelters } from "@/lib/demo-data";
 
 export function ShelterSearch({ initialQuery = "", initialFilter = "All Beds" }: { initialQuery?: string; initialFilter?: string }) {
+  const [shelters, setShelters] = useState<Shelter[]>([]);
   const [query, setQuery] = useState(initialQuery);
-  const [filter, setFilter] = useState(filters.includes(initialFilter) ? initialFilter : "All Beds");
-  const [sort, setSort] = useState("distance");
+  const [filter, setFilter] = useState(initialFilter);
   const [showFull, setShowFull] = useState(false);
-  const [options, setOptions] = useState(false);
-  const [mapView, setMapView] = useState(false);
-  const results = useMemo(() => shelters.filter(s => (showFull || s.beds > 0) && (filter === "All Beds" || s.tags.includes(filter)) && `${s.name} ${s.address} ${s.neighborhood}`.toLowerCase().includes(query.toLowerCase())).sort((a, b) => sort === "beds" ? b.beds - a.beds : a.distance - b.distance), [query, filter, sort, showFull]);
-  return <section className="container-wide py-10 sm:py-14"><div className="mb-8 flex flex-wrap items-end justify-between gap-5"><div><p className="eyebrow mb-3">A place to land · Birmingham, AL</p><h1 className="page-title">Find your next safe place.</h1></div><span className="text-xs text-muted">Sample data · Not live availability</span></div>
-    <div className="flex gap-3"><div className="flex flex-1 items-center gap-3 rounded-xl border border-line bg-surface px-4"><Search size={19} className="shrink-0 text-accent" /><label className="sr-only" htmlFor="shelter-search">Search shelters</label><input id="shelter-search" value={query} onChange={e => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent py-4 text-sm outline-none" placeholder="Search by neighborhood or shelter name" /></div><button className="btn btn-secondary rounded-xl px-4" onClick={() => setOptions(!options)} aria-expanded={options}><SlidersHorizontal size={18} /><span className="hidden sm:inline">Filters</span></button></div>
-    <div className="my-4 flex flex-wrap items-center gap-2">{filters.map(f => <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)} className={`chip ${filter === f ? "border-accent bg-accent text-background" : "text-muted"}`}>{f}</button>)}<div className="ml-auto flex items-center gap-2 py-2 text-xs text-muted"><ArrowDownUp size={14} /><label htmlFor="sort">Sort by</label><select id="sort" value={sort} onChange={e => setSort(e.target.value)} className="bg-background text-ink"><option value="distance">Sample distance</option><option value="beds">Most beds</option></select></div></div>
-    {options && <div className="mb-5 rounded-xl border border-line bg-surface p-4"><label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={showFull} onChange={e => setShowFull(e.target.checked)} />Include shelters with no available beds</label><p className="mt-2 text-xs text-muted">All counts, distances, intake details, and facilities shown are fictional demo fixtures.</p></div>}
-    <div className="mb-4 flex gap-2 lg:hidden"><button aria-pressed={!mapView} className={`chip ${!mapView ? "bg-raised" : ""}`} onClick={() => setMapView(false)}>List view</button><button aria-pressed={mapView} className={`chip ${mapView ? "bg-raised" : ""}`} onClick={() => setMapView(true)}>Map view</button></div>
-    <div className="grid gap-5 lg:grid-cols-[.95fr_1.15fr]">
-      <div className={mapView ? "hidden lg:block" : ""}><div className="mb-4 flex items-center justify-between"><h2 className="font-serif text-xl">Community shelters <span className="ml-2 text-sm text-muted">({results.length})</span></h2><span className="text-[10px] uppercase tracking-widest text-accent">Demo listings</span></div><div className="space-y-3">{results.map(s => <Link key={s.id} href={`/shelter-details/${s.id}`} className="panel group flex items-start gap-4 p-5 transition-colors hover:border-accent/60"><span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-raised text-accent"><BedDouble size={21} strokeWidth={1.4} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><h3 className="text-sm font-semibold group-hover:text-accent">{s.name}</h3><ArrowUpRight size={16} className="shrink-0 text-muted" /></div><p className="mt-2 flex items-center gap-1 text-xs text-muted"><MapPin size={12} />{s.neighborhood} · {s.distance} mi (sample)</p><p className="mt-2 text-xs text-muted">{s.audience}</p><div className="mt-4 flex flex-wrap items-center justify-between gap-2"><span className={`text-xs ${s.beds ? "text-accent" : "text-gold"}`}>{s.beds ? `${s.beds} sample beds available` : "Full · Waitlist open"}</span><span className="rounded-full bg-raised px-2.5 py-1 text-[10px] text-muted">{s.tags[0]}</span></div></div></Link>)}{!results.length && <div className="panel p-8 text-center"><Search className="mx-auto mb-4 text-accent" /><h3 className="font-serif text-xl">No matching shelters</h3><p className="my-3 text-sm text-muted">Try another neighborhood or broaden your filters.</p><button className="btn btn-secondary" onClick={() => { setQuery(""); setFilter("All Beds"); }}>Clear search</button></div>}</div></div>
-      <div className={`${mapView ? "" : "hidden"} lg:sticky lg:top-24 lg:block lg:self-start`}><NeighborhoodMap className="h-[480px] rounded-2xl border border-line lg:h-[620px]" locations={results} /><p className="mt-3 text-xs leading-6 text-muted">Real Birmingham map · Fictional shelter markers for UI testing. An open bed is not a reservation or confirmed admission.</p></div>
-    </div><p className="mt-8 rounded-xl border border-line p-4 text-xs leading-6 text-muted">Looking for real support? Call <a className="text-accent underline" href="tel:211">211</a> for local community resources. These listings are a demonstration, not a directory of real shelters.</p>
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    async function refresh() {
+      try { const data = await listShelters(); if (active) { setShelters(data); setError(""); } }
+      catch (error) { if (active) setError(error instanceof Error ? error.message : "Could not load shelters."); }
+      finally { if (active) setLoading(false); }
+    }
+    void refresh();
+    const timer = setInterval(refresh, 15000);
+    return () => { active = false; clearInterval(timer); };
+  }, [attempt]);
+  const services = [...new Set(shelters.flatMap(s => s.services))];
+  const results = shelters.filter(s => (showFull || s.available_beds > 0) &&
+    (filter === "All Beds" || s.services.includes(filter)) &&
+    `${s.name} ${s.address} ${s.services.join(" ")}`.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => b.available_beds - a.available_beds);
+  return <section className="container-wide space-y-6 py-12">
+    <h1 className="page-title">Find your next safe place.</h1>
+    <p className="text-sm text-muted">Availability from the shelter service. Seeded facilities are fictional; reported beds are not a reservation or confirmed admission.</p>
+    <label className="block text-sm">Search shelters<input className="field mt-2" value={query} onChange={e => setQuery(e.target.value)} placeholder="Shelter name, address, or service" /></label>
+    <label className="block text-sm">Service<select className="field mt-2" value={filter} onChange={e => setFilter(e.target.value)}>{["All Beds", ...services, ...(filter !== "All Beds" && !services.includes(filter) ? [filter] : [])].map(service => <option key={service}>{service}</option>)}</select></label>
+    <label className="flex gap-3 text-sm"><input type="checkbox" checked={showFull} onChange={e => setShowFull(e.target.checked)} />Include shelters with no reported beds</label>
+    {error && <div role="alert" className="space-y-3 text-gold"><p>Could not load current availability: {error}. {shelters.length ? "Previously loaded results may be out of date." : "No shelter data is available until the service reconnects."}</p><button type="button" className="btn btn-secondary" onClick={() => { setLoading(true); setError(""); setAttempt(value => value + 1); }}>Retry loading shelters</button></div>}
+    {loading ? <p role="status">Loading shelters…</p> : <div className="grid gap-6 lg:grid-cols-2"><div className="space-y-4"><h2 className="font-serif text-2xl">{results.length} shelters</h2>
+      {results.map(shelter => <Link key={shelter.id} href={`/shelter-details/${shelter.id}`} className="panel block space-y-3 p-6"><h3 className="font-serif text-2xl">{shelter.name}</h3><p className="text-sm text-muted">{shelter.address}</p><p className="text-accent">{shelter.available_beds} reported beds available</p><p className="text-xs text-muted">{shelter.services.join(" · ")}</p></Link>)}
+      {!results.length && !error && <div className="space-y-3"><p>{shelters.length ? "No matching shelters. Try another search, service, or include full shelters." : "No shelters have been published yet."}</p>{shelters.length > 0 && <button className="btn btn-secondary" onClick={() => { setQuery(""); setFilter("All Beds"); setShowFull(true); }}>Show all shelters</button>}</div>}
+    </div><NeighborhoodMap className="h-[500px] rounded-2xl border border-line" locations={results} /></div>}
   </section>;
 }

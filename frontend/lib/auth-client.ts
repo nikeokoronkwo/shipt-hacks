@@ -9,7 +9,8 @@ import {
 } from "./permissions";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL ?? "http://localhost:3000",
+  // Same-origin by default so cookies follow the app on localhost and deployments.
+  ...(process.env.NEXT_PUBLIC_BETTER_AUTH_URL ? { baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL } : {}),
   plugins: [
     adminClient({
       ac: accessControl,
