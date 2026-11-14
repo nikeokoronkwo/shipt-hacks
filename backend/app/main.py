@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import engine, init_db
+from app.shelters.router import router as shelter_router
 from app.auth.dependencies import CurrentUser, get_current_user
 
 
@@ -18,6 +19,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="ShelterConnect API", lifespan=lifespan)
+app.include_router(shelter_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.getenv(

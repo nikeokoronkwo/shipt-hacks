@@ -7,7 +7,8 @@
     "start": "tsx --env-file=.env src/server.ts",
     "migrate": "tsx --env-file=.env src/migrate.ts",
     "bootstrap-admin": "tsx --env-file=.env src/bootstrap-admin.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "seed-demo": "tsx --env-file=.env src/seed-demo.ts"
   },
   "engines": {
     "node": ">=22.13"
