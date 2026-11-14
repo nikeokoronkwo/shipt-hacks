@@ -1,6 +1,10 @@
 
 # Backend Developer 1 — Authentication, Authorization & Shelter Management
 
+> Historical record of Ben's separate auth-service implementation on `main`.
+> The current integrated implementation is in `frontend/` and
+> `backend/src/shiptohome/`; see the root [README](../README.md).
+
 ## 1. Overview
 
 **Project:** ShelterConnect — ShiptHacks  

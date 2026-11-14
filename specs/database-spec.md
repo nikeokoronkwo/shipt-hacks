@@ -1,6 +1,6 @@
 # ShelterConnect — Database Specification
 
-This document consolidates the application database outlined in `overall-spec.md`, `gavin-work-spec.md`, and `ben-work-spec.md`. It is a **schema specification**, not a migration. The backend implements it in `backend/app/models.py`; `app.database.init_db()` creates missing application tables on startup.
+This document consolidates the planned application database from `overall-spec.md`, `gavin-work-spec.md`, and `ben-work-spec.md`. It is a **target schema specification**, not a migration or a claim that every table is shipped. The active implementation is in `backend/src/shiptohome/models.py`; `initialize_application_tables()` creates the current domain tables. Vehicle (`cars`) storage remains planned and is not in the current API. See the root README for the active runtime and ownership boundary.
 
 ## Ownership and storage
 
@@ -116,4 +116,4 @@ CREATE UNIQUE INDEX ux_ride_requests_one_active_per_driver
 
 ## Not included
 
-No second password store, Better Auth role/user tables, notification table, or reservation table is part of this application schema. Better Auth's actual tables and migrations depend on its configured version/plugins and must be managed by the auth service, not inferred from this SQL.
+No second password store, Better Auth role/user tables, notification table, or reservation table is part of this application schema. Better Auth's actual tables and migrations depend on its configured version/plugins and are managed by the Next.js Better Auth runtime, not inferred from this SQL.

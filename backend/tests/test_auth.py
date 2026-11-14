@@ -1,87 +1,131 @@
+"""Unit checks for Better Auth JWT verification and role handling."""
+
+from __future__ import annotations
+
 import time
+import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import jwt
-import pytest
-from cryptography.hazmat.primitives.asymmetric import ec
-from fastapi import Depends
-from fastapi.testclient import TestClient
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from fastapi import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 
-from app.auth import jwt as verifier
-from app.auth.dependencies import require_role
-from app.main import app
+from shiptohome import auth as verifier
 
 
-@app.get("/test/driver")
-def driver(user=Depends(require_role("driver"))):
-    return user
+class FakeJwksClient:
+    def __init__(self, public_key):
+        self.public_key = public_key
+
+    def get_signing_key_from_jwt(self, _token: str):
+        return SimpleNamespace(key=self.public_key)
 
 
-@pytest.fixture
-def keys(monkeypatch):
-    private = ec.generate_private_key(ec.SECP256R1())
-    class Keys:
-        def get_signing_key_from_jwt(self, token):
-            return type("Key", (), {"key": private.public_key()})()
-    monkeypatch.setattr(verifier, "jwks_client", lambda: Keys())
-    return private
+class AuthTests(unittest.TestCase):
+    def setUp(self):
+        self.private_key = Ed25519PrivateKey.generate()
+        self.jwks_patch = patch.object(
+            verifier,
+            "jwks_client",
+            return_value=FakeJwksClient(self.private_key.public_key()),
+        )
+        self.jwks_patch.start()
+        self.addCleanup(self.jwks_patch.stop)
+
+    def make_token(self, **overrides):
+        claims = {
+            "sub": "user-1",
+            "role": "driver",
+            "phone_number": "+12055550100",
+            "phone_number_verified": True,
+            "iss": verifier.AUTH_ISSUER,
+            "aud": verifier.AUTH_AUDIENCE,
+            "exp": int(time.time()) + 300,
+        }
+        claims.update(overrides)
+        return jwt.encode(
+            claims,
+            self.private_key,
+            algorithm="EdDSA",
+            headers={"kid": "test-key"},
+        )
+
+    def credentials(self, token: str):
+        return HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    def assert_unauthorized(self, token: str):
+        with self.assertRaises(HTTPException) as raised:
+            verifier.get_current_user(self.credentials(token))
+        self.assertEqual(raised.exception.status_code, 401)
+        self.assertEqual(raised.exception.headers["WWW-Authenticate"], "Bearer")
+
+    def test_valid_verified_driver_claims(self):
+        user = verifier.get_current_user(self.credentials(self.make_token()))
+        self.assertEqual(user.id, "user-1")
+        self.assertEqual(user.role, "driver")
+        self.assertEqual(user.phone_number, "+12055550100")
+        self.assertTrue(user.phone_number_verified)
+
+    def test_supported_roles_are_accepted(self):
+        for role in ("driver", "shelter_admin", "super_admin"):
+            with self.subTest(role=role):
+                self.assertEqual(
+                    verifier.get_current_user(self.credentials(self.make_token(role=role))).role,
+                    role,
+                )
+
+    def test_invalid_claims_are_rejected(self):
+        invalid_claims = (
+            {"exp": 1},
+            {"iss": "https://wrong.example"},
+            {"aud": "wrong-api"},
+            {"sub": " "},
+            {"role": "admin"},
+            {"role": ["driver"]},
+            {"phone_number": 12055550100},
+        )
+        for claims in invalid_claims:
+            with self.subTest(claims=claims):
+                self.assert_unauthorized(self.make_token(**claims))
+
+    def test_only_configured_signing_algorithm_is_accepted(self):
+        token = jwt.encode(
+            {"sub": "user-1", "role": "driver"},
+            "not-a-real-signing-key-with-over-32-bytes",
+            algorithm="HS256",
+            headers={"kid": "test-key"},
+        )
+        self.assert_unauthorized(token)
+
+    def test_bad_signature_is_rejected(self):
+        other_key = Ed25519PrivateKey.generate()
+        token = jwt.encode(
+            {
+                "sub": "user-1",
+                "role": "driver",
+                "iss": verifier.AUTH_ISSUER,
+                "aud": verifier.AUTH_AUDIENCE,
+                "exp": int(time.time()) + 300,
+            },
+            other_key,
+            algorithm="EdDSA",
+            headers={"kid": "test-key"},
+        )
+        self.assert_unauthorized(token)
+
+    def test_missing_or_malformed_credentials_are_rejected(self):
+        for credentials in (
+            None,
+            HTTPAuthorizationCredentials(scheme="Basic", credentials="abc"),
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials="malformed"),
+        ):
+            with self.subTest(credentials=credentials):
+                with self.assertRaises(HTTPException) as raised:
+                    verifier.get_current_user(credentials)
+                self.assertEqual(raised.exception.status_code, 401)
 
 
-def token(keys, **overrides):
-    claims = {"sub": "user-1", "role": "driver", "iss": "http://localhost:3001",
-              "aud": "shelterconnect-api", "exp": int(time.time()) + 900}
-    claims.update(overrides)
-    return jwt.encode(claims, keys, algorithm="ES256", headers={"kid": "test-key"})
-
-
-def test_valid_identity_and_role(keys):
-    client = TestClient(app)
-    headers = {"Authorization": "Bearer " + token(keys)}
-    assert client.get("/api/me", headers=headers).json() == {"id": "user-1", "role": "driver"}
-    assert client.get("/test/driver", headers=headers).status_code == 200
-    headers = {"Authorization": "Bearer " + token(keys, role="super_admin")}
-    assert client.get("/test/driver", headers=headers).status_code == 403
-
-
-@pytest.mark.parametrize("overrides", [
-    {"exp": 1}, {"iss": "other"}, {"aud": "other"}, {"sub": ""},
-    {"role": "admin"}, {"role": ["driver"]}, {"exp": None}, {"exp": []},
-])
-def test_invalid_claims(keys, overrides):
-    response = TestClient(app).get("/api/me", headers={"Authorization": "Bearer " + token(keys, **overrides)})
-    assert response.status_code == 401
-    assert response.headers["www-authenticate"] == "Bearer"
-
-
-@pytest.mark.parametrize("header", [None, "Basic abc", "Bearer malformed"])
-def test_missing_or_malformed(keys, header):
-    assert TestClient(app).get("/api/me", headers={"Authorization": header} if header else {}).status_code == 401
-
-
-def test_bad_signature(keys):
-    other_key = ec.generate_private_key(ec.SECP256R1())
-    assert TestClient(app).get("/api/me", headers={"Authorization": "Bearer " + token(other_key)}).status_code == 401
-
-
-def test_missing_required_claim(keys):
-    encoded = jwt.encode({"sub": "user-1"}, keys, algorithm="ES256", headers={"kid": "test-key"})
-    assert TestClient(app).get("/api/me", headers={"Authorization": "Bearer " + encoded}).status_code == 401
-
-
-def test_unknown_keys_do_not_force_repeated_fetches(monkeypatch):
-    calls = []
-    private = ec.generate_private_key(ec.SECP256R1())
-    key = jwt.algorithms.ECAlgorithm.to_jwk(private.public_key(), as_dict=True)
-    key.update({"kid": "known", "use": "sig", "alg": "ES256"})
-    def fetch(self):
-        calls.append(1)
-        data = {"keys": [key]}
-        self.jwk_set_cache.put(data)
-        self._last_successful_fetch = time.monotonic()
-        return data
-    monkeypatch.setattr(jwt.PyJWKClient, "fetch_data", fetch)
-    client = jwt.PyJWKClient("http://unused.example/jwks", cooldown_duration=30)
-    assert client.get_signing_key("known").key_id == "known"
-    for _ in range(3):
-        with pytest.raises(jwt.PyJWKClientError):
-            client.get_signing_key("unknown")
-    assert len(calls) == 1
+if __name__ == "__main__":
+    unittest.main()
