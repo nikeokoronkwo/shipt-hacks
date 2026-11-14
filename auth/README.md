@@ -22,7 +22,7 @@ Create the initial super administrator locally using operator-supplied credentia
 ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='choose-a-strong-password' npm run bootstrap-admin
 ```
 
-This command uses Better Auth's server API. Re-running for an existing email fails rather than resetting credentials. There are no seeded passwords or automatic administrator promotions. Signed-in super administrators can create shelter administrators or assign roles through Better Auth's Admin plugin. Drivers and shelter administrators receive no user-management permissions.
+This command uses Better Auth's server API. Re-running for an existing email fails rather than resetting credentials. The optional demo seed command below generates random local passwords; there are no fixed seeded passwords or automatic administrator promotions. Signed-in super administrators can create shelter administrators or assign roles through Better Auth's Admin plugin. Drivers and shelter administrators receive no user-management permissions.
 
 ## HTTP flow
 
@@ -44,3 +44,7 @@ npm run check
 ```
 
 See `backend/README.md` for FastAPI setup and the full smoke test.
+
+## Optional local demo accounts
+
+Run `npm run seed-demo` to migrate the auth database and create a demo `super_admin` and `shelter_admin` through Better Auth's supported server API. Random credentials are stored in the ignored repository-root `.demo-credentials.json` (owner-only permissions). Rerunning preserves passwords and checks existing roles. Next run `uv run python -m app.seed` from `backend/` to create the fictional shelters and the demo administrator assignment. Both services must use the same SQLite file. Never commit the credentials or local database.
