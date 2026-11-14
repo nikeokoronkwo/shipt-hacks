@@ -1,549 +1,804 @@
 <!DOCTYPE html>
 
-<html lang="en"><head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Birmingham Explorer</title>
-    <!-- Tailwind CSS v3 with Plugins -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"primary":"#bec6e0","primary-fixed-dim":"#bec6e0","on-tertiary-fixed-variant":"#7f2b00","outline-variant":"#45464d","primary-container":"#0f172a","surface-container":"#002238","on-surface":"#cce5ff","on-secondary-fixed-variant":"#005236","on-primary-fixed":"#131b2e","error":"#ffb4ab","secondary":"#4edea3","on-error-container":"#ffdad6","on-error":"#690005","tertiary-fixed-dim":"#ffb599","surface-container-high":"#002d47","primary-fixed":"#dae2fd","surface-variant":"#003858","on-background":"#cce5ff","surface-container-low":"#001d31","surface-container-highest":"#003858","surface-dim":"#001525","on-secondary-fixed":"#002113","surface-tint":"#bec6e0","error-container":"#93000a","outline":"#909097","inverse-primary":"#565e74","on-tertiary":"#5a1c00","on-primary-container":"#798098","inverse-on-surface":"#003351","tertiary-fixed":"#ffdbce","on-surface-variant":"#c6c6cd","secondary-container":"#00a572","on-primary":"#283044","tertiary":"#ffb599","on-secondary":"#003824","secondary-fixed-dim":"#4edea3","secondary-fixed":"#6ffbbe","on-tertiary-container":"#e15101","on-tertiary-fixed":"#370e00","background":"#001525","surface-container-lowest":"#000f1d","surface":"#001525","inverse-surface":"#cce5ff","on-primary-fixed-variant":"#3f465c","surface-bright":"#003c5f","tertiary-container":"#310b00","on-secondary-container":"#00311f"},borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},spacing:{"gutter":"1rem","margin-tablet":"1.5rem","space-xl":"2.5rem","space-xs":"0.25rem","space-sm":"0.5rem","margin":"2rem","space-md":"1rem","gutter-mobile":"0.75rem","space-lg":"1.5rem","margin-mobile":"1rem"},fontFamily:{"body-md":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-md":["Hanken Grotesk"],"headline-lg-mobile":["Manrope"],"metric-display":["Manrope"],"body-lg":["Hanken Grotesk"],"label-sm":["Hanken Grotesk"],"display-lg":["Manrope"],"title-md":["Hanken Grotesk"],"headline-lg":["Manrope"],"headline-sm":["Manrope"],"headline-md":["Manrope"]},fontSize:{"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-md":["13px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}],"headline-lg-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.015em","fontWeight":"600"}],"metric-display":["28px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.06em","fontWeight":"700"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"title-md":["16px",{"lineHeight":"22px","fontWeight":"600"}],"headline-lg":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-low/75 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]"><div class="h-20 w-full px-gutter md:px-margin flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><a class="flex items-center gap-space-sm group" data-path="home" href="#"><div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)]"><span class="material-symbols-outlined text-secondary text-[22px]">radar</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">HavenTransit</span><span class="font-label-sm text-label-sm text-secondary tracking-widest uppercase">Sanctuary Relay</span></div></a><div class="hidden xl:flex items-center gap-space-xs px-space-md py-1.5 rounded-full bg-surface-container-high/60 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span></span><span class="font-label-sm text-label-sm text-on-surface-variant">Live Bed Status:</span><span class="font-label-sm text-label-sm text-secondary font-bold">1,420 Active Openings</span></div></div><nav class="hidden lg:flex items-center gap-space-xs p-1.5 rounded-full bg-surface-container-lowest/50 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]" data-active-classes="bg-surface-container-high text-on-surface font-title-md"><a class="px-space-md py-2 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-path="find-shelter" href="#">Find Shelter</a><a class="px-space-md py-2 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-path="for-shelters" href="#">For Shelters</a><a class="px-space-md py-2 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-path="volunteer-drivers" href="#">Volunteer Drivers</a><a class="px-space-md py-2 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-path="partners-impact" href="#">Partners &amp; Impact</a><a class="px-space-md py-2 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" data-path="donate" href="#">Donate</a></nav><div class="flex items-center gap-space-sm"><a class="hidden sm:inline-flex items-center justify-center px-space-lg py-2.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold transition-all hover:bg-secondary-fixed hover:text-on-secondary-fixed shadow-[0_0_18px_rgba(78,222,163,0.35)]" data-path="request-ride-stay" href="#">Request Ride &amp; Stay</a><a class="inline-flex items-center justify-center px-space-md py-2.5 rounded-full bg-surface-container-high/80 text-on-surface font-label-md text-label-md hover:bg-surface-variant hover:text-on-surface transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)]" data-path="partner-portal" href="#">Partner Portal</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 bg-surface min-h-screen"><div class="flex flex-col w-full">
+    <!-- HERO & INTERACTIVE IPAD-STYLE SANCTUARY MAP DISPATCH -->
+    <section class="relative w-full overflow-hidden bg-surface py-space-xl px-gutter md:px-margin">
+        <!-- Ambient Radial Glow Behind Map Stage -->
+        <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] h-[450px] bg-secondary/10 blur-[130px] pointer-events-none rounded-full"></div>
+        <div class="absolute top-1/3 -right-40 w-[600px] h-[400px] bg-primary/10 blur-[140px] pointer-events-none rounded-full"></div>
+        <div class="max-w-7xl mx-auto flex flex-col gap-space-xl relative z-10">
+            <!-- Section Header with Operational Badge -->
+            <div class="flex flex-col items-center text-center max-w-3xl mx-auto gap-space-sm">
+                <div class="inline-flex items-center gap-2 px-space-md py-1.5 rounded-full bg-surface-container-high/80 text-secondary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+                    <span class="font-label-sm text-label-sm uppercase tracking-wider font-bold">24/7 Rapid Human Dignity Routing</span>
+                </div>
+                <h1 class="font-display-lg text-display-lg text-on-surface font-bold tracking-tight">
+                    Warm beds tonight. <span class="text-secondary">Safe transit</span> to get there.
+                </h1>
+                <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                    Instantly connect individuals and families facing exposure to verified emergency shelter beds, paired with compassionate, background-vetted volunteer drivers in under 12 minutes.
+                </p>
+                <!-- Quick Action Trigger Row -->
+                <div class="flex items-center gap-space-sm pt-space-xs flex-wrap justify-center">
+                    <a class="inline-flex items-center gap-2 px-space-lg py-3 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold transition-all hover:bg-secondary-fixed shadow-[0_0_24px_rgba(78,222,163,0.3)]" href="#map-command-canvas">
+                        <span class="material-symbols-outlined text-[18px]">near_me</span>
+                        Request Rapid Relay
+                    </a>
+                    <a class="inline-flex items-center gap-2 px-space-lg py-3 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]" href="#shelter-portal">
+                        <span class="material-symbols-outlined text-[18px]">domain</span>
+                        Partner Shelters
+                    </a>
+                    <a class="inline-flex items-center gap-2 px-space-lg py-3 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]" href="#driver-protocol">
+                        <span class="material-symbols-outlined text-[18px]">directions_car</span>
+                        Volunteer Drive
+                    </a>
+                </div>
+            </div>
+            <!-- IPAD PRO OVERLAY SIMULATOR: MAP & FLOATING DRAWER (PAM/APPLE MAPS METAPHOR) -->
+            <div class="relative w-full h-[720px] rounded-lg overflow-hidden shadow-2xl bg-surface-container-lowest" id="map-command-canvas">
+                <!-- Interactive Vector Map Canvas (SVG Cartography) -->
+                <div class="absolute inset-0 w-full h-full select-none cursor-grab active:cursor-grabbing">
+                    <!-- Stylized Apple Maps Dark Theme Vector Cartography -->
+                    <svg class="w-full h-full object-cover" fill="none" viewbox="0 0 1440 760" xmlns="http://www.w3.org/2000/svg">
+                        <rect fill="#001525" height="760" width="1440"></rect>
+                        <!-- Water Body (Metropolitan Bay / River) -->
+                        <path d="M-40 420 C 180 380, 240 540, 520 480 C 780 430, 890 280, 1100 240 C 1320 200, 1400 120, 1490 80 L 1490 790 L -40 790 Z" fill="#002238"></path>
+                        <path d="M840 -40 C 890 120, 960 180, 1080 230 C 1190 270, 1260 210, 1490 190 L 1490 -40 Z" fill="#001d31"></path>
+                        <!-- Park Reserves -->
+                        <path d="M 680 80 Q 750 40 820 90 T 920 180 T 780 220 T 670 140 Z" fill="#002d47" opacity="0.6"></path>
+                        <path d="M 120 120 Q 220 90 290 160 T 260 290 T 140 260 Z" fill="#002d47" opacity="0.4"></path>
+                        <path d="M 1120 480 Q 1280 440 1360 520 T 1280 680 T 1140 600 Z" fill="#002d47" opacity="0.5"></path>
+                        <!-- Road Infrastructure Grid Lines -->
+                        <g opacity="0.45" stroke="#003858" stroke-width="1.5">
+                            <line x1="0" x2="1440" y1="120" y2="120"></line>
+                            <line x1="0" x2="1440" y1="210" y2="210"></line>
+                            <line x1="0" x2="1440" y1="310" y2="310"></line>
+                            <line x1="0" x2="1440" y1="410" y2="410"></line>
+                            <line x1="0" x2="1440" y1="520" y2="520"></line>
+                            <line x1="0" x2="1440" y1="640" y2="640"></line>
+                            <line x1="160" x2="160" y1="0" y2="760"></line>
+                            <line x1="340" x2="340" y1="0" y2="760"></line>
+                            <line x1="510" x2="510" y1="0" y2="760"></line>
+                            <line x1="680" x2="680" y1="0" y2="760"></line>
+                            <line x1="860" x2="860" y1="0" y2="760"></line>
+                            <line x1="1040" x2="1040" y1="0" y2="760"></line>
+                            <line x1="1220" x2="1220" y1="0" y2="760"></line>
+                        </g>
+                        <!-- Express Highway Arterials -->
+                        <path d="M-20 280 C 320 260, 680 340, 940 310 C 1180 280, 1340 390, 1460 410" stroke="#003c5f" stroke-linecap="round" stroke-width="6"></path>
+                        <path d="M-20 280 C 320 260, 680 340, 940 310 C 1180 280, 1340 390, 1460 410" opacity="0.4" stroke="#bec6e0" stroke-dasharray="8 6" stroke-width="1.5"></path>
+                        <path d="M 640 -20 C 660 240, 610 460, 710 780" stroke="#003c5f" stroke-linecap="round" stroke-width="6"></path>
+                        <!-- Live Active Volunteer Driver Vector GPS Route -->
+                        <path class="animate-pulse" d="M 520 210 Q 610 260 740 240 T 960 380" id="active-dispatch-route" stroke="#4edea3" stroke-dasharray="6 6" stroke-linecap="round" stroke-width="4"></path>
+                        <!-- Geo District Typography -->
+                        <text fill="#798098" font-family="Manrope" font-size="12" font-weight="700" letter-spacing="0.25em" x="580" y="160">DOWNTOWN CORRIDOR</text>
+                        <text fill="#798098" font-family="Manrope" font-size="12" font-weight="700" letter-spacing="0.25em" x="980" y="140">CIVIC CIVITAS PARK</text>
+                        <text fill="#798098" font-family="Manrope" font-size="12" font-weight="700" letter-spacing="0.25em" x="1080" y="520">SOUTH HARBOR DISTRICT</text>
+                        <text fill="#798098" font-family="Manrope" font-size="12" font-weight="700" letter-spacing="0.25em" x="240" y="580">RIVERSIDE INDUSTRIAL</text>
+                    </svg>
+                    <!-- Interactive Pulse Markers for Shelters & Rides -->
+                    <!-- Marker 1: St Jude Sanctuary -->
+                    <div class="absolute top-[210px] left-[520px] -translate-x-1/2 -translate-y-1/2 group cursor-pointer" onclick="highlightShelter('st-jude')">
+                        <span class="absolute -inset-3 bg-secondary/20 rounded-full animate-ping"></span>
+                        <div class="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high/90 text-on-surface shadow-xl shadow-black/50 border border-white/10 backdrop-blur-md group-hover:bg-secondary group-hover:text-on-secondary transition-all">
+                            <span class="material-symbols-outlined text-[16px] text-secondary group-hover:text-on-secondary">bed</span>
+                            <span class="font-label-sm text-label-sm font-bold">St. Jude • 4 Beds</span>
+                        </div>
+                    </div>
+                    <!-- Marker 2: Hope Harbor Refuge -->
+                    <div class="absolute top-[380px] left-[960px] -translate-x-1/2 -translate-y-1/2 group cursor-pointer" onclick="highlightShelter('hope-harbor')">
+                        <span class="absolute -inset-2 bg-secondary/30 rounded-full"></span>
+                        <div class="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high/90 text-on-surface shadow-xl shadow-black/50 border border-white/10 backdrop-blur-md group-hover:bg-secondary group-hover:text-on-secondary transition-all">
+                            <span class="material-symbols-outlined text-[16px] text-secondary group-hover:text-on-secondary">family_restroom</span>
+                            <span class="font-label-sm text-label-sm font-bold">Hope Harbor • 8 Beds</span>
+                        </div>
+                    </div>
+                    <!-- Marker 3: Metropolitan Crisis Hub -->
+                    <div class="absolute top-[280px] left-[780px] -translate-x-1/2 -translate-y-1/2 group cursor-pointer" onclick="highlightShelter('metro-youth')">
+                        <div class="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high/90 text-on-surface shadow-xl shadow-black/50 border border-white/10 backdrop-blur-md group-hover:bg-secondary group-hover:text-on-secondary transition-all">
+                            <span class="material-symbols-outlined text-[16px] text-secondary group-hover:text-on-secondary">health_and_safety</span>
+                            <span class="font-label-sm text-label-sm font-bold">Metro Refuge • 3 Beds</span>
+                        </div>
+                    </div>
+                    <!-- Moving En Route Volunteer Driver Marker -->
+                    <div class="absolute top-[250px] left-[680px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none">
+                        <div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-lg shadow-secondary/40">
+                            <span class="material-symbols-outlined text-[18px]">directions_car</span>
+                        </div>
+                        <span class="mt-1 px-2 py-0.5 rounded-full bg-surface-container-lowest text-[10px] text-secondary font-bold tracking-tight shadow">Driver David • ETA 4m</span>
+                    </div>
+                </div>
+                <!-- Floating Apple Maps / iPadOS Style Frosted Glass Drawer -->
+                <div class="absolute top-4 left-4 bottom-4 w-full max-w-[410px] bg-surface-container-low/85 backdrop-blur-2xl rounded-lg shadow-[0_20px_60px_rgba(0,0,0,0.6)] flex flex-col z-20 overflow-hidden">
+                    <!-- Drawer Drag Handle & Header Pill Controls -->
+                    <div class="p-space-md pb-space-xs flex flex-col gap-space-sm">
+                        <div class="w-10 h-1 bg-outline-variant/60 rounded-full mx-auto"></div>
+                        <!-- iPadOS Style Pill Search Bar -->
+                        <div class="relative flex items-center w-full h-[48px] rounded-full bg-surface-container-high/90 px-space-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]">
+                            <span class="material-symbols-outlined text-primary text-[20px] mr-2">search</span>
+                            <input class="w-full bg-transparent text-on-surface placeholder:text-on-surface-variant font-body-md text-body-md focus:outline-none" id="shelter-search-input" placeholder="Search zip, address, or shelter name..." type="text"/>
+                            <button class="text-on-surface-variant hover:text-on-surface transition-colors p-1" onclick="document.getElementById('shelter-search-input').value='';">
+                                <span class="material-symbols-outlined text-[18px]">cancel</span>
+                            </button>
+                            <button class="text-on-surface-variant hover:text-secondary transition-colors p-1">
+                                <span class="material-symbols-outlined text-[18px]">mic</span>
+                            </button>
+                        </div>
+                        <!-- Horizontal Scrolling Filter Pills (Exact Apple Maps reference style) -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
+                            <button class="whitespace-nowrap px-3 py-1 rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm font-bold shadow-sm">
+                                All Openings (19)
+                            </button>
+                            <button class="whitespace-nowrap px-3 py-1 rounded-full bg-surface-container-high/80 text-on-surface font-label-sm text-label-sm hover:bg-surface-variant transition-colors">
+                                Instant Bed
+                            </button>
+                            <button class="whitespace-nowrap px-3 py-1 rounded-full bg-surface-container-high/80 text-on-surface font-label-sm text-label-sm hover:bg-surface-variant transition-colors">
+                                Family
+                            </button>
+                            <button class="whitespace-nowrap px-3 py-1 rounded-full bg-surface-container-high/80 text-on-surface font-label-sm text-label-sm hover:bg-surface-variant transition-colors">
+                                Pet Friendly
+                            </button>
+                            <button class="whitespace-nowrap px-3 py-1 rounded-full bg-surface-container-high/80 text-on-surface font-label-sm text-label-sm hover:bg-surface-variant transition-colors">
+                                ADA Wheelchair
+                            </button>
+                            <button class="whitespace-nowrap px-3 py-1 rounded-full bg-surface-container-high/80 text-on-surface font-label-sm text-label-sm hover:bg-surface-variant transition-colors">
+                                Warming Shelter
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Drawer Content: Live Bed List Cards -->
+                    <div class="flex-1 overflow-y-auto px-space-md py-space-xs flex flex-col gap-space-sm" id="shelter-feed-cards">
+                        <!-- Shelter Card 1 -->
+                        <div class="p-space-md rounded-DEFAULT bg-surface-container-high/60 hover:bg-surface-container-high transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] flex flex-col gap-space-sm cursor-pointer" id="card-st-jude">
+                            <div class="flex items-start justify-between gap-space-xs">
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                                        <span class="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider">Live Intake Available</span>
+                                    </div>
+                                    <h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">St. Jude Community Sanctuary</h2>
+                                    <p class="font-body-sm text-body-sm text-on-surface-variant">1284 Franciscan Way • 1.2 miles away</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-metric-display text-metric-display text-secondary font-bold">4</span>
+                                    <span class="block font-label-sm text-label-sm text-on-surface-variant">Beds left</span>
+                                </div>
+                            </div>
+                            <!-- Tags -->
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">Hot Dinner (until 9PM)</span>
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">Lockers</span>
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">Pet OK</span>
+                            </div>
+                            <!-- Action Ribbon -->
+                            <div class="flex items-center justify-between pt-space-xs">
+                                <div class="flex items-center gap-1 text-on-secondary-fixed">
+                                    <span class="material-symbols-outlined text-[16px] text-secondary">verified</span>
+                                    <span class="font-label-sm text-label-sm text-secondary">Driver ready in 8 mins</span>
+                                </div>
+                                <button class="px-3.5 py-1.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold hover:bg-secondary-fixed transition-all shadow-md">
+                                    Request Ride &amp; Bed
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Shelter Card 2 -->
+                        <div class="p-space-md rounded-DEFAULT bg-surface-container-high/60 hover:bg-surface-container-high transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] flex flex-col gap-space-sm cursor-pointer" id="card-hope-harbor">
+                            <div class="flex items-start justify-between gap-space-xs">
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                                        <span class="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider">Family Rooms Ready</span>
+                                    </div>
+                                    <h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Hope Harbor Women &amp; Children Center</h2>
+                                    <p class="font-body-sm text-body-sm text-on-surface-variant">742 Marine Blvd • 2.4 miles away</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-metric-display text-metric-display text-secondary font-bold">8</span>
+                                    <span class="block font-label-sm text-label-sm text-on-surface-variant">Beds left</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">Private Family Units</span>
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">Pediatric Nurse</span>
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">ADA Accessible</span>
+                            </div>
+                            <div class="flex items-center justify-between pt-space-xs">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px] text-secondary">verified</span>
+                                    <span class="font-label-sm text-label-sm text-secondary">Van with Car Seats Available</span>
+                                </div>
+                                <button class="px-3.5 py-1.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold hover:bg-secondary-fixed transition-all shadow-md">
+                                    Request Ride &amp; Bed
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Shelter Card 3 -->
+                        <div class="p-space-md rounded-DEFAULT bg-surface-container-high/60 hover:bg-surface-container-high transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] flex flex-col gap-space-sm cursor-pointer" id="card-metro-youth">
+                            <div class="flex items-start justify-between gap-space-xs">
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                                        <span class="font-label-sm text-label-sm text-tertiary font-bold uppercase tracking-wider">Fast Filling (Ages 18-24)</span>
+                                    </div>
+                                    <h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Metropolitan Youth Crisis Refuge</h2>
+                                    <p class="font-body-sm text-body-sm text-on-surface-variant">908 6th Avenue • 0.8 miles away</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-metric-display text-metric-display text-tertiary font-bold">3</span>
+                                    <span class="block font-label-sm text-label-sm text-on-surface-variant">Beds left</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">LGBTQ+ Affirming</span>
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">Charging Stations</span>
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container text-[11px] text-on-surface-variant">Showers</span>
+                            </div>
+                            <div class="flex items-center justify-between pt-space-xs">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px] text-secondary">verified</span>
+                                    <span class="font-label-sm text-label-sm text-secondary">Walk-in or Volunteer Transit</span>
+                                </div>
+                                <button class="px-3.5 py-1.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold hover:bg-secondary-fixed transition-all shadow-md">
+                                    Request Ride &amp; Bed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Bottom Drawer Micro-Bar -->
+                    <div class="p-space-sm px-space-md bg-surface-container-lowest/80 border-t-0 flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">shield_lock</span>
+              Confidential • No ID Required for Transit
+            </span>
+                        <button class="text-secondary font-label-sm text-label-sm font-bold hover:underline" onclick="alert('Relay hotline triggered: Dialing 2-1-1 or HavenRelay Dispatch.')">
+                            Need Dispatch Help?
+                        </button>
+                    </div>
+                </div>
+                <!-- Floating Apple Maps Floating Controls (Right Perimeter) -->
+                <div class="absolute top-4 right-4 flex flex-col gap-2 z-20">
+                    <button class="w-11 h-11 rounded-full bg-surface-container-high/90 text-on-surface flex items-center justify-center backdrop-blur-xl shadow-lg hover:bg-surface-variant transition-all" title="Recenter Coordinates">
+                        <span class="material-symbols-outlined text-[20px]">my_location</span>
+                    </button>
+                    <button class="w-11 h-11 rounded-full bg-surface-container-high/90 text-on-surface flex items-center justify-center backdrop-blur-xl shadow-lg hover:bg-surface-variant transition-all" title="Compass Orientation">
+                        <span class="material-symbols-outlined text-[20px] text-tertiary">explore</span>
+                    </button>
+                    <button class="w-11 h-11 rounded-full bg-surface-container-high/90 text-on-surface flex items-center justify-center backdrop-blur-xl shadow-lg hover:bg-surface-variant transition-all" title="Toggle Map Layers">
+                        <span class="material-symbols-outlined text-[20px]">layers</span>
+                    </button>
+                    <div class="h-4"></div>
+                    <button class="w-11 h-11 rounded-full bg-surface-container-high/90 text-on-surface flex items-center justify-center backdrop-blur-xl shadow-lg hover:bg-surface-variant transition-all" title="Map Zoom In">
+                        <span class="material-symbols-outlined text-[20px]">add</span>
+                    </button>
+                    <button class="w-11 h-11 rounded-full bg-surface-container-high/90 text-on-surface flex items-center justify-center backdrop-blur-xl shadow-lg hover:bg-surface-variant transition-all" title="Map Zoom Out">
+                        <span class="material-symbols-outlined text-[20px]">remove</span>
+                    </button>
+                </div>
+                <!-- Floating Telemetry Bottom Dock (Inspired by Pam & Apple Maps dock) -->
+                <div class="absolute bottom-4 right-4 z-20 flex items-center gap-space-sm bg-surface-container-high/90 backdrop-blur-2xl px-space-md py-2 rounded-full shadow-2xl">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span>
+                        <span class="font-label-sm text-label-sm text-on-surface font-bold">14 Active Drivers Patrolling Sector 4</span>
+                    </div>
+                    <div class="h-4 w-[1px] bg-outline-variant/60"></div>
+                    <span class="font-body-sm text-body-sm text-on-surface-variant">Weather: 34°F Cold Alert</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- SECTION 2: FOR HOMELESS SHELTERS & CRISIS HOUSING ORGS -->
+    <section class="w-full bg-surface-container-lowest py-space-xl px-gutter md:px-margin relative" id="shelter-portal">
+        <div class="max-w-7xl mx-auto flex flex-col gap-space-xl">
+            <!-- Narrative Header -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-lg">
+                <div class="max-w-2xl flex flex-col gap-space-xs">
+                    <span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-bold">For Shelter Coordinators &amp; Housing Agencies</span>
+                    <h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
+                        Empower Your Shelter: Real-Time Intake &amp; Coordinated Arrival.
+                    </h2>
+                    <p class="font-body-md text-body-md text-on-surface-variant">
+                        Eliminate chaotic midnight door turnaways and empty unused cots. HavenTransit synchronizes your live bed census, pre-screens arriving guests, and notifies your staff 15 minutes before verified volunteer arrival.
+                    </p>
+                </div>
+                <div class="flex items-center gap-space-sm flex-wrap">
+                    <a class="px-space-lg py-2.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold transition-all hover:bg-secondary-fixed shadow-[0_0_18px_rgba(78,222,163,0.3)]" href="#">
+                        Register Your Shelter
+                    </a>
+                    <a class="px-space-md py-2.5 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-all" href="#">
+                        Shelter Portal Login
+                    </a>
+                </div>
+            </div>
+            <!-- Shelter Dashboard Preview & Intake Telemetry Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-stretch">
+                <!-- Live Shelter Staff Intake Simulator Screen (7 Cols) -->
+                <div class="lg:col-span-7 rounded-lg bg-surface-container-low p-space-lg shadow-xl flex flex-col gap-space-md">
+                    <div class="flex items-center justify-between pb-space-sm">
+                        <div class="flex items-center gap-space-sm">
+                            <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary">
+                                <span class="material-symbols-outlined text-[18px]">bed</span>
+                            </div>
+                            <div>
+                                <h3 class="font-title-md text-title-md text-on-surface font-bold">Bayview Haven Sanctuary • Desk Console</h3>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Live Census: 38 of 42 Beds Occupied • 4 Reserved in Transit</p>
+                            </div>
+                        </div>
+                        <span class="px-space-sm py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Auto-Sync Active
+            </span>
+                    </div>
+                    <!-- Real-Time Incoming Transit Dispatch Queue -->
+                    <div class="flex flex-col gap-space-xs">
+                        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-bold">Incoming Vetted Guest Relays</span>
+                        <!-- Relay Item 1 -->
+                        <div class="p-space-md rounded-DEFAULT bg-surface-container-high/70 flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+                            <div class="flex items-center gap-space-sm">
+                                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-secondary">
+                                    <span class="material-symbols-outlined text-[20px]">directions_car</span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-title-md text-title-md text-on-surface font-bold">Guest: Marcus T.</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-secondary">Bed #14 Reserved</span>
+                                    </div>
+                                    <p class="font-body-sm text-body-sm text-on-surface-variant">Driver: Elena R. (Toyota RAV4) • Verified 5-star Volunteer</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-space-sm sm:flex-col sm:items-end">
+                                <span class="font-metric-display text-[20px] text-secondary font-bold">ETA 6 min</span>
+                                <span class="font-label-sm text-label-sm text-on-surface-variant">Wheelchair lift equipped</span>
+                            </div>
+                        </div>
+                        <!-- Relay Item 2 -->
+                        <div class="p-space-md rounded-DEFAULT bg-surface-container-high/70 flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+                            <div class="flex items-center gap-space-sm">
+                                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined text-[20px]">family_restroom</span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-title-md text-title-md text-on-surface font-bold">Guest: Sarah &amp; Daughter (age 4)</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-primary">Family Suite B</span>
+                                    </div>
+                                    <p class="font-body-sm text-body-sm text-on-surface-variant">Driver: Marcus K. • Companion Escort Certified</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-space-sm sm:flex-col sm:items-end">
+                                <span class="font-metric-display text-[20px] text-primary font-bold">ETA 19 min</span>
+                                <span class="font-label-sm text-label-sm text-on-surface-variant">Carseat pre-installed</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Quick Bed Toggle Matrix -->
+                    <div class="pt-space-xs flex flex-col gap-2">
+                        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-bold">1-Click Census Adjuster</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <button class="p-2.5 rounded-DEFAULT bg-surface-container text-center hover:bg-surface-container-high transition-colors">
+                                <span class="block font-headline-sm text-headline-sm text-on-surface font-bold">Dorm A</span>
+                                <span class="font-label-sm text-label-sm text-secondary">2 Available</span>
+                            </button>
+                            <button class="p-2.5 rounded-DEFAULT bg-surface-container text-center hover:bg-surface-container-high transition-colors">
+                                <span class="block font-headline-sm text-headline-sm text-on-surface font-bold">Dorm B</span>
+                                <span class="font-label-sm text-label-sm text-outline">Full (0)</span>
+                            </button>
+                            <button class="p-2.5 rounded-DEFAULT bg-surface-container text-center hover:bg-surface-container-high transition-colors">
+                                <span class="block font-headline-sm text-headline-sm text-on-surface font-bold">Family</span>
+                                <span class="font-label-sm text-label-sm text-secondary">1 Suite</span>
+                            </button>
+                            <button class="p-2.5 rounded-DEFAULT bg-surface-container text-center hover:bg-surface-container-high transition-colors">
+                                <span class="block font-headline-sm text-headline-sm text-on-surface font-bold">Medical</span>
+                                <span class="font-label-sm text-label-sm text-secondary">1 Bed</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 4 Key Shelter Benefits Column (5 Cols) -->
+                <div class="lg:col-span-5 flex flex-col justify-between gap-space-sm">
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex items-start gap-space-md shadow-md">
+                        <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-secondary text-[22px]">sync</span>
+                        </div>
+                        <div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold">Live HMIS &amp; Capacity API Sync</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Direct integration with municipal Homeless Management Information Systems and shelter spreadsheets to avoid duplicate bed reservations.</p>
+                        </div>
+                    </div>
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex items-start gap-space-md shadow-md">
+                        <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-secondary text-[22px]">verified_user</span>
+                        </div>
+                        <div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold">De-escalated &amp; Screened Arrival</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Guests are paired with trauma-informed drivers who assist with personal belongings and complete digital wellness sign-ins in vehicle.</p>
+                        </div>
+                    </div>
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex items-start gap-space-md shadow-md">
+                        <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-secondary text-[22px]">nest_clock_farsight_analog</span>
+                        </div>
+                        <div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold">Predictable Staff Scheduling</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">No more surprise 2AM line-ups. Your team sees confirmed ETAs up to 2 hours in advance, ensuring night staff is always prepared.</p>
+                        </div>
+                    </div>
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex items-start gap-space-md shadow-md">
+                        <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-secondary text-[22px]">ring_volume</span>
+                        </div>
+                        <div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold">24/7 Care Coordinator Hotline</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Direct priority voice patch between your front intake personnel, the volunteer driver en route, and municipal crisis social workers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- SECTION 3: FOR VOLUNTEER DRIVERS & DISPATCH -->
+    <section class="w-full bg-surface py-space-xl px-gutter md:px-margin relative overflow-hidden" id="driver-protocol">
+        <div class="max-w-7xl mx-auto flex flex-col gap-space-xl relative z-10">
+            <!-- Driver Narrative -->
+            <div class="max-w-3xl flex flex-col gap-space-xs">
+                <span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-bold">Civic Volunteer Transit Relay</span>
+                <h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
+                    Drive With Purpose: The Bridge Between the Streets and a Safe Bed.
+                </h2>
+                <p class="font-body-md text-body-md text-on-surface-variant">
+                    Your car can save someone from hypothermia tonight. Join over 3,200 vetted volunteer drivers providing low-friction, high-empathy rides from street corners and encampments directly to registered shelter beds.
+                </p>
+            </div>
+            <!-- Bento Grid: Driver Interface & Trust Guarantees -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+                <!-- Driver Active Mission Mobile HUD Simulator -->
+                <div class="md:col-span-1 rounded-lg bg-surface-container-low p-space-md flex flex-col justify-between shadow-xl">
+                    <div class="flex items-center justify-between pb-space-sm">
+<span class="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span> Driver Mission Active
+            </span>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">Sector #09</span>
+                    </div>
+                    <div class="p-space-md rounded-DEFAULT bg-surface-container-high/80 flex flex-col gap-space-sm">
+                        <!-- Pickup point -->
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-tertiary-container flex items-center justify-center shrink-0 text-tertiary">
+                                <span class="material-symbols-outlined text-[16px]">location_on</span>
+                            </div>
+                            <div>
+                                <span class="block font-label-sm text-label-sm text-on-surface-variant uppercase">Pickup Location</span>
+                                <span class="font-title-md text-title-md text-on-surface font-bold">4th &amp; Market St (Library Steps)</span>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Passenger: David • Medium backpack &amp; service dog</p>
+                            </div>
+                        </div>
+                        <!-- Arrow Route -->
+                        <div class="pl-3.5 -my-1">
+                            <div class="w-0.5 h-6 bg-outline-variant/60"></div>
+                        </div>
+                        <!-- Dropoff point -->
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-secondary-container flex items-center justify-center shrink-0 text-on-secondary">
+                                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                            </div>
+                            <div>
+                                <span class="block font-label-sm text-label-sm text-on-surface-variant uppercase">Dropoff Shelter</span>
+                                <span class="font-title-md text-title-md text-on-surface font-bold">Bayview Haven Shelter</span>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Staff on-site: Intake Lead James</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-space-md flex flex-col gap-2">
+                        <div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+                            <span>Trip Reimbursement:</span>
+                            <span class="text-on-surface font-bold">$18.50 (Fuel/Stipend)</span>
+                        </div>
+                        <button class="w-full py-2.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold hover:bg-secondary-fixed transition-all text-center">
+                            Tap to Start GPS Navigation
+                        </button>
+                    </div>
+                </div>
+                <!-- Trust, Safety & Volunteer Shield Column -->
+                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex flex-col justify-between shadow-md">
+                        <div class="flex flex-col gap-space-xs">
+                            <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-secondary">
+                                <span class="material-symbols-outlined text-[22px]">health_and_safety</span>
+                            </div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold mt-2">$1,000,000 Liability Umbrella</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">Every volunteer trip is automatically protected with primary commercial liability and collision insurance from ride start to passenger intake handoff.</p>
+                        </div>
+                        <span class="pt-space-sm font-label-sm text-label-sm text-secondary font-bold">Zero out-of-pocket exposure</span>
+                    </div>
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex flex-col justify-between shadow-md">
+                        <div class="flex flex-col gap-space-xs">
+                            <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-secondary">
+                                <span class="material-symbols-outlined text-[22px]">psychology</span>
+                            </div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold mt-2">Trauma-Informed Audio Training</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">Complete our concise 25-minute certified mobile audio module on compassionate interaction, de-escalation, and passenger dignity rights.</p>
+                        </div>
+                        <span class="pt-space-sm font-label-sm text-label-sm text-secondary font-bold">Self-paced certification</span>
+                    </div>
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex flex-col justify-between shadow-md">
+                        <div class="flex flex-col gap-space-xs">
+                            <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-secondary">
+                                <span class="material-symbols-outlined text-[22px]">local_gas_station</span>
+                            </div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold mt-2">Mileage Reimbursement or Gift Tax</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">Opt to receive instant ACH IRS standard mileage reimbursement or auto-generate monthly 501(c)(3) tax exemption deduction receipts.</p>
+                        </div>
+                        <span class="pt-space-sm font-label-sm text-label-sm text-secondary font-bold">Instant daily payouts</span>
+                    </div>
+                    <div class="p-space-lg rounded-lg bg-surface-container-low flex flex-col justify-between shadow-md">
+                        <div class="flex flex-col gap-space-xs">
+                            <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-secondary">
+                                <span class="material-symbols-outlined text-[22px]">group</span>
+                            </div>
+                            <h3 class="font-title-md text-title-md text-on-surface font-bold mt-2">Companion Driver Pairing</h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">Prefer not to drive alone at night? Activate our Companion Relay mode to automatically pair with a fellow civilian volunteer as co-pilot.</p>
+                        </div>
+                        <span class="pt-space-sm font-label-sm text-label-sm text-secondary font-bold">Mutual safety in every car</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Action Row for Volunteer Driver Onboarding -->
+            <div class="p-space-lg rounded-lg bg-surface-container-high flex flex-col sm:flex-row items-center justify-between gap-space-md">
+                <div class="flex items-center gap-space-md">
+                    <div class="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-on-secondary shrink-0">
+                        <span class="material-symbols-outlined text-[26px]">badge</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Ready to take your first relief shift?</h3>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">Background check approval takes under 24 hours. Choose your own hours and neighborhood radius.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-space-sm shrink-0">
+                    <button class="px-space-lg py-2.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold hover:bg-secondary-fixed transition-all shadow-md">
+                        Apply as Volunteer Driver
+                    </button>
+                    <button class="px-space-md py-2.5 rounded-full bg-surface-container text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-all">
+                        Driver Sign In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- SECTION 4: CORPORATE ALLIANCE, MUNICIPAL SPONSORS & LOGO TICKER -->
+    <section class="w-full bg-surface-container-lowest py-space-xl px-gutter md:px-margin">
+        <div class="max-w-7xl mx-auto flex flex-col gap-space-xl">
+            <!-- Section Intro & Headline -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+                <div>
+                    <span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-bold">Enterprise &amp; City Infrastructure</span>
+                    <h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-1">
+                        Civic Coalition &amp; Corporate Alliances: Ending Exposure Deaths Together.
+                    </h2>
+                    <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-1">
+                        Technology leaders, urban transit authorities, and national relief funds pooling resources to make zero-barrier nocturnal transit universally available.
+                    </p>
+                </div>
+                <button class="px-space-lg py-2.5 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] whitespace-nowrap">
+                    Become a Corporate Partner
+                </button>
+            </div>
+            <!-- Coalition Stats Bar -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
+                <div class="p-space-md rounded-DEFAULT bg-surface-container-low flex flex-col gap-1">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Safe Relays Completed</span>
+                    <span class="font-display-lg text-[36px] text-secondary font-bold">42,850+</span>
+                    <span class="font-body-sm text-body-sm text-on-surface-variant">Zero passenger safety incidents</span>
+                </div>
+                <div class="p-space-md rounded-DEFAULT bg-surface-container-low flex flex-col gap-1">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Networked Shelters</span>
+                    <span class="font-display-lg text-[36px] text-on-surface font-bold">118</span>
+                    <span class="font-body-sm text-body-sm text-on-surface-variant">Across 48 metro corridors</span>
+                </div>
+                <div class="p-space-md rounded-DEFAULT bg-surface-container-low flex flex-col gap-1">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Verified Safe Arrival Rate</span>
+                    <span class="font-display-lg text-[36px] text-secondary font-bold">99.4%</span>
+                    <span class="font-body-sm text-body-sm text-on-surface-variant">Confirmed digital desk check-ins</span>
+                </div>
+                <div class="p-space-md rounded-DEFAULT bg-surface-container-low flex flex-col gap-1">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Average Dispatch Time</span>
+                    <span class="font-display-lg text-[36px] text-on-surface font-bold">11.4 min</span>
+                    <span class="font-body-sm text-body-sm text-on-surface-variant">From request to pickup</span>
+                </div>
+            </div>
+            <!-- Refined Monochrome Corporate Partner Logo Strip (Direct homage to screenshot reference image_1) -->
+            <div class="flex flex-col gap-space-sm pt-space-xs">
+                <div class="flex items-center gap-space-md">
+                    <div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest font-bold">TRUSTED BY CIVIC &amp; TECH ALLIES</span>
+                    <div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+                </div>
+                <!-- Clean Brand Banner Grid -->
+                <div class="flex flex-wrap items-center justify-between gap-space-lg px-space-md py-space-sm opacity-60 hover:opacity-90 transition-opacity">
+                    <!-- Vercel logo mark -->
+                    <div class="flex items-center gap-2 text-on-surface font-headline-sm font-bold tracking-tight">
+                        <svg class="w-5 h-5 fill-current" viewbox="0 0 24 24"><polygon points="12 2 24 22 0 22"></polygon></svg>
+                        <span>Vercel</span>
+                    </div>
+                    <!-- Strapi style -->
+                    <div class="flex items-center gap-2 text-on-surface font-headline-sm font-bold tracking-tight">
+                        <span class="w-5 h-5 rounded bg-on-surface inline-block"></span>
+                        <span>strapi</span>
+                    </div>
+                    <!-- beatBread style -->
+                    <div class="flex items-center gap-1.5 text-on-surface font-headline-sm font-bold tracking-tight">
+                        <span class="text-secondary font-black text-xl">b</span>
+                        <span>beatBread</span>
+                    </div>
+                    <!-- Artlist style -->
+                    <div class="flex items-center gap-1 text-on-surface font-headline-sm font-bold tracking-tight">
+                        <span class="italic font-black text-xl">Artlist</span>
+                    </div>
+                    <!-- sim style -->
+                    <div class="flex items-center text-on-surface font-headline-sm font-bold tracking-tight">
+                        <span>sim</span>
+                    </div>
+                    <!-- supermemory style -->
+                    <div class="flex items-center gap-1.5 text-on-surface font-headline-sm font-bold tracking-tight">
+                        <span class="material-symbols-outlined text-[18px]">grain</span>
+                        <span>supermemory</span>
+                    </div>
+                    <!-- AXIOM style -->
+                    <div class="flex items-center gap-1.5 text-on-surface font-headline-sm font-bold tracking-tight">
+                        <span class="material-symbols-outlined text-[18px]">change_history</span>
+                        <span>AXIOM</span>
+                    </div>
+                    <!-- OpenAI style -->
+                    <div class="flex items-center gap-1.5 text-on-surface font-headline-sm font-bold tracking-tight">
+                        <span class="material-symbols-outlined text-[18px]">emergency</span>
+                        <span>OpenAI Impact</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- SECTION 5: HIGH-IMPACT DONATION & 24/7 EMERGENCY CRISIS CTA -->
+    <section class="w-full bg-surface py-space-xl px-gutter md:px-margin relative" id="donate-bridge">
+        <div class="max-w-7xl mx-auto flex flex-col gap-space-xl">
+            <!-- Interactive Donation Matrix Card -->
+            <div class="rounded-lg bg-surface-container-low p-space-lg md:p-space-xl shadow-2xl relative overflow-hidden">
+                <!-- Decorative Glow Accents -->
+                <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-secondary/15 rounded-full blur-[90px] pointer-events-none"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center relative z-10">
+                    <!-- Left Text Column -->
+                    <div class="lg:col-span-6 flex flex-col gap-space-md">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high text-secondary font-label-sm text-label-sm font-bold w-fit">
+                            <span class="material-symbols-outlined text-[16px]">favorite</span>
+                            Direct Mutual Aid Transit Fund
+                        </div>
+                        <h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
+                            Every $28 funds a safe ride and an emergency shelter placement.
+                        </h2>
+                        <p class="font-body-md text-body-md text-on-surface-variant">
+                            100% of public gifts directly fund volunteer mileage stipends, emergency motel overflow vouchers during extreme frost advisories, and guest welcome kits (clean socks, blankets, thermal meals).
+                        </p>
+                        <div class="flex flex-col gap-2 pt-space-xs">
+                            <div class="flex items-center gap-2 text-on-surface font-body-sm text-body-sm">
+                                <span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+                                Certified 501(c)(3) tax-exempt civic humanitarian organization.
+                            </div>
+                            <div class="flex items-center gap-2 text-on-surface font-body-sm text-body-sm">
+                                <span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+                                Audited real-time dashboard of every ride dollar spent.
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right Interactive Giving Panel -->
+                    <div class="lg:col-span-6 rounded-DEFAULT bg-surface-container-high/90 p-space-lg flex flex-col gap-space-md shadow-xl">
+                        <!-- Frequency Switch (Apple Segmented Glass style) -->
+                        <div class="grid grid-cols-2 p-1 rounded-full bg-surface-container text-center">
+                            <button class="py-2 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md font-bold shadow-sm transition-all" id="freq-monthly" onclick="selectDonationFreq('monthly')">
+                                Monthly Guardian
+                            </button>
+                            <button class="py-2 rounded-full text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-all" id="freq-onetime" onclick="selectDonationFreq('onetime')">
+                                One-Time Gift
+                            </button>
+                        </div>
+                        <!-- Tier Pills -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="donation-tier-pill p-3 rounded-DEFAULT bg-surface-container text-center hover:bg-surface-variant transition-all focus:ring-2 focus:ring-secondary active" onclick="setDonationAmount(28, this)">
+                                <span class="block font-headline-sm text-headline-sm text-on-surface font-bold">$28</span>
+                                <span class="font-label-sm text-label-sm text-secondary">1 Night + Ride</span>
+                            </button>
+                            <button class="donation-tier-pill p-3 rounded-DEFAULT bg-surface-container text-center hover:bg-surface-variant transition-all focus:ring-2 focus:ring-secondary" onclick="setDonationAmount(84, this)">
+                                <span class="block font-headline-sm text-headline-sm text-on-surface font-bold">$84</span>
+                                <span class="font-label-sm text-label-sm text-on-surface-variant">Weekend Bridge</span>
+                            </button>
+                            <button class="donation-tier-pill p-3 rounded-DEFAULT bg-surface-container text-center hover:bg-surface-variant transition-all focus:ring-2 focus:ring-secondary" onclick="setDonationAmount(250, this)">
+                                <span class="block font-headline-sm text-headline-sm text-on-surface font-bold">$250</span>
+                                <span class="font-label-sm text-label-sm text-on-surface-variant">Family Suite</span>
+                            </button>
+                        </div>
+                        <!-- Custom Input -->
+                        <div class="relative flex items-center w-full h-[46px] rounded-DEFAULT bg-surface-container px-3">
+                            <span class="text-on-surface font-bold mr-1">$</span>
+                            <input class="w-full bg-transparent text-on-surface font-body-md text-body-md focus:outline-none" id="custom-donation-input" placeholder="Enter custom amount" type="number" value="28"/>
+                        </div>
+                        <!-- Payment Action -->
+                        <button class="w-full py-3.5 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold hover:bg-secondary-fixed transition-all shadow-[0_0_20px_rgba(78,222,163,0.35)] flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">lock</span>
+                            Complete Tax-Deductible Donation
+                        </button>
+                        <!-- Express Checkout Micro-Badges -->
+                        <div class="flex items-center justify-center gap-space-md text-on-surface-variant font-body-sm text-body-sm">
+                            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">credit_card</span> Credit Card</span>
+                            <span>•</span>
+                            <span>Apple Pay</span>
+                            <span>•</span>
+                            <span>Google Pay</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Urgent Immediate Shelter Hot-Bar -->
+            <div class="p-space-lg rounded-lg bg-tertiary-container text-on-tertiary flex flex-col md:flex-row items-center justify-between gap-space-md shadow-xl">
+                <div class="flex items-center gap-space-md">
+                    <div class="w-12 h-12 rounded-full bg-tertiary flex items-center justify-center text-on-tertiary font-bold shrink-0">
+                        <span class="material-symbols-outlined text-[24px]">priority_high</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm font-bold">In Cold Distress or Immediate Crisis?</h3>
+                        <p class="font-body-sm text-body-sm opacity-90">Trained crisis dispatchers are waiting right now. Free transport dispatched within 15 minutes.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-space-sm flex-wrap shrink-0">
+                    <a class="px-space-lg py-2.5 rounded-full bg-surface-container-lowest text-on-surface font-label-md text-label-md font-bold hover:bg-surface transition-all" href="tel:211">
+                        Call 2-1-1
+                    </a>
+                    <a class="px-space-lg py-2.5 rounded-full bg-tertiary text-on-tertiary font-label-md text-label-md font-bold hover:bg-tertiary-fixed transition-all shadow-lg" href="tel:8005557233">
+                        Direct HavenRelay (800) 555-SAFE
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Inline Client Interaction Script -->
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            orange: '#e07238',
-                            'orange-hover': '#c9612a',
-                            amber: '#f59e0b',
-                            dark: '#141416',
-                            sidebar: '#18191c',
-                            card: '#1e2024',
-                            border: '#2a2d32',
-                            grid: '#1f2024',
-                            road: '#8f7756',
-                            river: '#1e3851',
-                            park: '#253526',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-                        serif: ['Georgia', 'Cambria', 'serif']
+        function highlightShelter(id) {
+            const cards = ['st-jude', 'hope-harbor', 'metro-youth'];
+            cards.forEach(cardKey => {
+                const el = document.getElementById('card-' + cardKey);
+                if (el) {
+                    if (cardKey === id) {
+                        el.classList.add('bg-surface-container-high', 'scale-[1.02]');
+                        el.classList.remove('bg-surface-container-high/60');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        el.classList.remove('bg-surface-container-high', 'scale-[1.02]');
+                        el.classList.add('bg-surface-container-high/60');
                     }
                 }
+            });
+        }
+
+        function selectDonationFreq(freq) {
+            const mBtn = document.getElementById('freq-monthly');
+            const oBtn = document.getElementById('freq-onetime');
+            if (freq === 'monthly') {
+                mBtn.className = 'py-2 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md font-bold shadow-sm transition-all';
+                oBtn.className = 'py-2 rounded-full text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-all';
+            } else {
+                oBtn.className = 'py-2 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md font-bold shadow-sm transition-all';
+                mBtn.className = 'py-2 rounded-full text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-all';
+            }
+        }
+
+        function setDonationAmount(amount, buttonEl) {
+            document.getElementById('custom-donation-input').value = amount;
+            document.querySelectorAll('.donation-tier-pill').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-secondary', 'bg-surface-container-high');
+                btn.classList.add('bg-surface-container');
+            });
+            if (buttonEl) {
+                buttonEl.classList.add('ring-2', 'ring-secondary', 'bg-surface-container-high');
+                buttonEl.classList.remove('bg-surface-container');
             }
         }
     </script>
-    <!-- BEGIN: Base Layout Styles -->
-    <style data-purpose="base-layout">
-        /* Custom scrollbars for dark sidebar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #18191c;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #2f3238;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #40444c;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
-    <!-- END: Base Layout Styles -->
-    <!-- BEGIN: Map Styles -->
-    <style data-purpose="map-styling">
-        /* Background street grid texture */
-        .map-grid-layer {
-            background-color: #17181c;
-            background-image:
-                    linear-gradient(to right, rgba(46, 49, 56, 0.45) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(46, 49, 56, 0.45) 1px, transparent 1px);
-            background-size: 44px 44px;
-        }
-
-        /* Sub-grid city blocks */
-        .map-blocks-pattern {
-            background-image: radial-gradient(rgba(35, 38, 44, 0.95) 60%, transparent 60%);
-            background-size: 22px 22px;
-        }
-
-        /* Marker teardrop pulse / hover */
-        .map-pin {
-            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .map-pin:hover {
-            transform: translateY(-4px) scale(1.08);
-            z-index: 40;
-        }
-    </style>
-    <!-- END: Map Styles -->
-</head>
-<body class="bg-brand-dark text-slate-200 antialiased h-screen overflow-hidden flex flex-col font-sans select-none">
-<!-- BEGIN: MainHeader -->
-<header class="h-14 border-b border-brand-border bg-[#131417] px-4 flex items-center justify-between z-30 shrink-0">
-    <!-- Brand Title & Location -->
-    <div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full bg-brand-orange/20 border border-brand-orange/30 flex items-center justify-center text-brand-orange"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg></div><div><h1 class="text-sm font-bold tracking-tight text-white leading-tight">Birmingham Shelter Explorer</h1><p class="text-[11px] text-zinc-400 leading-none">Birmingham, Alabama · Emergency Housing &amp; Relief</p></div></div>
-    <!-- Country / City Segmented Controls & Demo Tag -->
-    <div class="flex items-center space-x-3">
-        <!-- Region Switcher -->
-        <div class="bg-[#1f2025] p-1 rounded-full border border-zinc-800 flex items-center text-xs">
-            <button class="flex items-center space-x-1.5 bg-[#e07238] text-white px-2.5 py-1 rounded-full font-medium transition shadow-sm">
-                <span class="text-[10px] font-bold tracking-wider opacity-90 uppercase">AL</span>
-                <span>Alabama</span>
-            </button>
-        </div>
-        <!-- Demo Data Pill Badge -->
-        <div class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202227] border border-zinc-800 text-xs text-zinc-300">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-            <span class="font-normal text-zinc-300">Demo data</span>
-        </div>
-    </div>
-</header>
-<!-- END: MainHeader -->
-<!-- BEGIN: MainContentWrapper -->
-<div class="flex flex-1 overflow-hidden relative">
-    <!-- BEGIN: LeftSidebar -->
-    <aside class="w-full md:w-[410px] lg:w-[430px] shrink-0 bg-[#16171a] border-r border-brand-border flex flex-col z-20 shadow-2xl">
-        <!-- Sticky Sidebar Filters / Controls Container -->
-        <div class="p-3.5 space-y-3 border-b border-brand-border/60 bg-[#16171a] shrink-0"><div class="relative"><span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 21l-4.35-4.35M16.65 11a5.65 5.65 0 11-11.3 0 5.65 5.65 0 0111.3 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><input class="w-full pl-9 pr-8 py-2 bg-[#202227] border border-zinc-800 text-xs text-zinc-100 placeholder-zinc-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-orange focus:border-brand-orange transition" placeholder="Search homeless shelters, food pantries, warming centers..." type="text" value="Birmingham shelters with open beds"/><span class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none"><kbd class="text-[10px] text-zinc-500 bg-[#2b2d34] px-1.5 py-0.5 rounded font-mono border border-zinc-700">/</kbd></span></div><div class="flex items-center space-x-2 overflow-x-auto hide-scrollbar pb-0.5 text-xs"><button class="shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white text-zinc-950 font-medium shadow-sm transition hover:bg-zinc-100"><svg class="w-3.5 h-3.5 text-zinc-900" fill="currentColor" viewbox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg><span>All Shelters</span></button><button class="shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202227] border border-zinc-800 text-zinc-300 font-normal hover:bg-[#282a31] transition"><svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 7v11m0-4h18m0-7v11M3 11h18M7 7V4a1 1 0 011-1h8a1 1 0 011 1v3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Emergency / Beds</span></button><button class="shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202227] border border-zinc-800 text-zinc-300 font-normal hover:bg-[#282a31] transition"><svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Family &amp; Women</span></button><button class="shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202227] border border-zinc-800 text-zinc-300 font-normal hover:bg-[#282a31] transition"><svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 3v7a3 3 0 003 3h0a3 3 0 003-3V3m3 18v-8a3 3 0 013-3h0a3 3 0 013 3v8" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Day Centers &amp; Food</span></button><button class="shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202227] border border-zinc-800 text-zinc-300 font-normal hover:bg-[#282a31] transition"><svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Warming Centers</span></button></div><div class="flex items-center justify-between text-xs pt-1"><div class="flex items-center space-x-2"><button class="w-8 h-4.5 bg-emerald-500 rounded-full p-0.5 flex items-center justify-end cursor-pointer transition"><div class="w-3.5 h-3.5 bg-white rounded-full shadow-md"></div></button><span class="text-xs font-medium text-zinc-200">Open beds now</span></div><div class="flex items-center space-x-2"><button class="flex items-center space-x-1 px-2.5 py-1.5 rounded-md bg-[#202227] border border-zinc-800 text-zinc-300 text-xs hover:border-zinc-700"><span>Any intake</span><svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><button class="flex items-center space-x-1 px-2.5 py-1.5 rounded-md bg-[#202227] border border-zinc-800 text-zinc-300 text-xs hover:border-zinc-700"><span>Sort by available beds</span><svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div></div></div>
-        <!-- Result Counter Header -->
-        <div class="px-4 py-2 bg-[#16171a] flex items-center justify-between border-b border-brand-border/40 text-[11px] shrink-0"><span class="text-zinc-400"><strong id="shelter-total" class="text-zinc-200 font-semibold text-xs">0 shelters</strong> · Emergency housing in Birmingham, AL</span><button id="shelter-full-count" class="text-brand-orange hover:underline font-medium">0 at capacity · Filter</button></div>
-        <!-- BEGIN: Scrollable Place Cards List -->
-        <div id="shelter-list" class="flex-1 overflow-y-auto divide-y divide-brand-border/40 p-2 space-y-1"></div>
-        <!-- Per-shelter occupancy panel (shown when a shelter is selected) -->
-        <div id="shelter-detail" class="hidden flex-1 overflow-y-auto p-4"></div>
-        <!-- END: Scrollable Place Cards List -->
-    </aside>
-    <!-- END: LeftSidebar -->
-    <!-- BEGIN: MapArea -->
-    <main class="flex-1 relative bg-[#18191c] overflow-hidden">
-        <!-- Interactive Grid Canvas Background -->
-        <div class="absolute inset-0 map-grid-layer opacity-80"></div>
-        <div class="absolute inset-0 map-blocks-pattern opacity-10"></div>
-        <!-- SVG Map Graphics Layer (Parks, Freeways, Highways, Rivers) -->
-        <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <filter height="140%" id="soft-blur" width="140%" x="-20%" y="-20%">
-                    <fegaussianblur stddeviation="3"></fegaussianblur>
-                </filter>
-            </defs>
-            <!-- Park Area 1 (Downtown North Park) -->
-            <rect fill="#203423" fill-opacity="0.85" height="70" rx="14" width="105" x="560" y="320"></rect>
-            <!-- Large Green Space (Red Mountain Park / South Range) -->
-            <path d="M 320 860 C 330 760, 480 670, 700 700 C 650 780, 520 880, 410 880 Z" fill="#213324" fill-opacity="0.85"></path>
-            <!-- Green Oval Park (Avondale / Highland Park) -->
-            <ellipse cx="860" cy="650" fill="#203323" fill-opacity="0.9" rx="70" ry="50"></ellipse>
-            <!-- Curved River Waterway Across Bottom (Cahaba / Valley Creek) -->
-            <path d="M 280 910 C 450 915, 680 920, 800 850 C 890 800, 950 820, 1020 825" fill="none" opacity="0.95" stroke="#1f384d" stroke-linecap="round" stroke-width="26"></path>
-            <!-- Minor Street Arterials in Birmingham Grid -->
-            <line opacity="0.5" stroke="#483f34" stroke-width="6" x1="300" x2="1050" y1="365" y2="365"></line>
-            <line opacity="0.4" stroke="#3e3933" stroke-width="3" x1="430" x2="430" y1="120" y2="900"></line>
-            <line opacity="0.4" stroke="#3e3933" stroke-width="3" x1="680" x2="680" y1="120" y2="900"></line>
-            <!-- Highway I-65 Curve cutting diagonally -->
-            <path d="M 380 60 C 400 240, 550 560, 780 1000" fill="none" opacity="0.88" stroke="#7e6648" stroke-linecap="round" stroke-width="11"></path>
-            <!-- Interstate I-20 / I-59 Cross Arterial Line -->
-            <path d="M 280 750 C 500 710, 720 540, 1050 200" fill="none" opacity="0.88" stroke="#7e6648" stroke-linecap="round" stroke-width="10"></path>
-        </svg>
-        <!-- BEGIN: SampleDataBanner -->
-        <!-- Floating Notification / API Key Banner -->
-        <div class="absolute top-5 left-1/2 -translate-x-1/2 z-30 w-auto max-w-xl"><div class="bg-[#1e2025]/95 backdrop-blur border border-zinc-700/80 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center space-x-3.5 text-zinc-100"><div class="w-8 h-8 rounded-full bg-[#35251b] border border-[#7d4826]/50 flex items-center justify-center text-brand-orange shrink-0"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg></div><div class="pr-2 leading-tight"><p class="text-xs font-semibold text-zinc-100">You're viewing sample shelter capacity data.</p><p class="text-[11px] text-zinc-400">Connect City HMIS or Google Places API for real-time bed sync.</p></div><button class="bg-[#e07238] hover:bg-[#c9612a] text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg shadow transition shrink-0">Connect feed</button><button class="text-zinc-500 hover:text-zinc-300 transition p-1 shrink-0"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div></div>
-        <!-- END: SampleDataBanner -->
-        <!-- BEGIN: MapPins -->
-        <!-- Marker 1: Birmingham Zoo (Right Southeast side) -->
-        <div class="map-pin absolute cursor-pointer" style="left: 885px; top: 485px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">1</span>
-                </div>
-            </div>
-        </div>
-        <!-- Marker 2: Vulcan Park (Center South along arterial) -->
-        <div class="map-pin absolute cursor-pointer" style="left: 795px; top: 435px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">2</span>
-                </div>
-            </div>
-        </div>
-        <!-- Marker 3: Railroad Park (Downtown Hub) -->
-        <div class="map-pin absolute cursor-pointer" style="left: 700px; top: 295px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">3</span>
-                </div>
-            </div>
-        </div>
-        <!-- Marker 4: Civil Rights Institute (Downtown Core) -->
-        <div class="map-pin absolute cursor-pointer" style="left: 686px; top: 226px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">4</span>
-                </div>
-            </div>
-        </div>
-        <!-- User Current Location Indicator (Near 4 & 5) -->
-        <div class="absolute z-20 pointer-events-none" style="left: 712px; top: 238px;">
-            <div class="relative flex items-center justify-center">
-                <div class="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-md animate-pulse"></div>
-                <div class="w-8 h-8 rounded-full bg-blue-500/20 absolute -inset-2 animate-ping"></div>
-            </div>
-        </div>
-        <!-- Marker 5: McWane Science Center -->
-        <div class="map-pin absolute cursor-pointer" style="left: 725px; top: 245px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">5</span>
-                </div>
-            </div>
-        </div>
-        <!-- Marker 7: North Downtown -->
-        <div class="map-pin absolute cursor-pointer" style="left: 710px; top: 172px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">7</span>
-                </div>
-            </div>
-        </div>
-        <!-- Marker 6: Uptown Entertainment District -->
-        <div class="map-pin absolute cursor-pointer" style="left: 820px; top: 188px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">6</span>
-                </div>
-            </div>
-        </div>
-        <!-- Marker 9: Southside Historic -->
-        <div class="map-pin absolute cursor-pointer" style="left: 795px; top: 245px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-5.5 h-6.5 bg-[#8e5234] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[10px] font-bold transform -rotate-45">9</span>
-                </div>
-            </div>
-        </div>
-        <!-- Marker 8: Southwest Park Valley -->
-        <div class="map-pin absolute cursor-pointer" style="left: 398px; top: 810px;">
-            <div class="relative flex flex-col items-center">
-                <div class="w-6 h-7 bg-[#ea580c] rounded-t-full rounded-b-sm flex items-center justify-center shadow-lg transform rotate-45">
-                    <span class="text-white text-[11px] font-bold transform -rotate-45">8</span>
-                </div>
-            </div>
-        </div>
-        <!-- END: MapPins -->
-        <!-- Map Watermark Caption (Bottom Center) -->
-        <div class="absolute bottom-4 left-6 pointer-events-none select-none"><p class="font-serif tracking-[0.25em] text-[10px] text-zinc-600 uppercase font-semibold">Birmingham, Alabama · Emergency Shelter Map</p></div>
-        <!-- Locate Me Floating Button (Bottom Right) -->
-        <div class="absolute bottom-5 right-5 z-20">
-            <button aria-label="Re-center on current location" class="w-9 h-9 rounded-full bg-[#1b1c20] border border-zinc-700/80 text-zinc-300 hover:text-white flex items-center justify-center shadow-xl hover:bg-[#25272e] transition">
-                <!-- Crosshair target icon -->
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M12 2v3m0 14v3M2 12h3m14 0h3" stroke-linecap="round" stroke-linejoin="round"></path>
-                    <circle cx="12" cy="12" r="8"></circle>
-                </svg>
-            </button>
-        </div>
-    </main>
-    <!-- END: MapArea -->
-</div>
-<!-- END: MainContentWrapper -->
-<!-- BEGIN: Shelter Occupancy Log (per shelter) -->
-<script>
-(function () {
-    // Each shelter has its own capacity, count and log, stored under its id.
-    // Pin numbers on the map match a shelter's position in this list (pin 1 = first shelter).
-    const SHELTERS = [
-        { id: "firehouse", name: "The Firehouse Shelter", rating: 4.6, reviews: 184, kind: "Men's Emergency Shelter",
-          status: "Open intake", unit: "beds", capacity: 80, count: 66,
-          address: "626 2nd Ave N, Birmingham, AL 35203",
-          icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" },
-        { id: "first-light", name: "First Light Women & Children's Shelter", rating: 4.8, reviews: 210, kind: "Women & Family Sanctuary",
-          status: "Open 24/7", unit: "family rooms", capacity: 30, count: 24,
-          address: "2230 4th Ave N, Birmingham, AL 35203",
-          icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" },
-        { id: "jimmie-hale", name: "Jimmie Hale Mission (Shepura Men's Center)", rating: 4.7, reviews: 320, kind: "Recovery & Emergency Beds",
-          status: "Intake until 8 PM", unit: "beds", capacity: 120, count: 98,
-          address: "3420 2nd Ave N, Birmingham, AL 35222",
-          icon: "M12 4v16m8-8H4" },
-        { id: "aletheia", name: "Aletheia House / Pathways Shelter", rating: 4.5, reviews: 95, kind: "Day Center & Overnight",
-          status: "Open now", unit: "cots", capacity: 40, count: 32,
-          address: "409 Richard Arrington Jr Blvd N, Birmingham, AL",
-          icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-        { id: "salvation-army", name: "Salvation Army Center of Hope", rating: 4.4, reviews: 142, kind: "Emergency Lodge & Meals",
-          status: "Open now · Hot dinner at 5:30 PM", unit: "beds", capacity: 60, count: 55,
-          address: "2015 26th Ave N, Birmingham, AL 35234",
-          icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
-    ];
-
-    const STORAGE_KEY = "shelter-log-v2";
-
-    // ---------- State: { [shelterId]: { capacity, count, entries } } ----------
-    function loadStore() {
-        let saved = {};
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) saved = JSON.parse(raw) || {};
-        } catch { /* ignore bad or blocked storage */ }
-        // Make sure every shelter has its own record, seeded from the defaults above
-        for (const s of SHELTERS) {
-            if (!saved[s.id]) saved[s.id] = { capacity: s.capacity, count: s.count, entries: [] };
-        }
-        return saved;
-    }
-    const store = loadStore();
-
-    function save() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch { /* storage unavailable */ }
-    }
-
-    const byId = (id) => SHELTERS.find((s) => s.id === id);
-    const available = (log) => Math.max(0, log.capacity - log.count);
-    const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-
-    let selectedId = null;
-
-    // ---------- Actions (all scoped to one shelter id) ----------
-    function logChange(id, type, amount, note) {
-        const log = store[id];
-        const newCount = type === "in" ? log.count + amount : Math.max(0, log.count - amount);
-        log.count = newCount;
-        log.entries.unshift({
-            id: crypto.randomUUID(),
-            time: new Date().toISOString(),
-            type, amount,
-            countAfter: newCount,
-            note: (note || "").trim(),
-        });
-        save();
-        refresh();
-    }
-
-    function setCapacity(id, value) {
-        store[id].capacity = Math.max(0, parseInt(value, 10) || 0);
-        save();
-        refresh();
-    }
-
-    function exportCSV(id) {
-        const header = "time,type,amount,count_after,note\n";
-        const rows = store[id].entries
-            .map((e) => [e.time, e.type, e.amount, e.countAfter, `"${e.note.replace(/"/g, '""')}"`].join(","))
-            .join("\n");
-        const blob = new Blob([header + rows], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `shelter-log-${id}-${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    function resetShelter(id) {
-        if (window.confirm(`Clear the count and the entire log for ${byId(id).name}?`)) {
-            store[id].count = 0;
-            store[id].entries = [];
-            save();
-            refresh();
-        }
-    }
-
-    // ---------- Sidebar list ----------
-    const listEl = document.getElementById("shelter-list");
-    const detailEl = document.getElementById("shelter-detail");
-
-    function renderList() {
-        listEl.innerHTML = SHELTERS.map((s, i) => {
-            const log = store[s.id];
-            const free = available(log);
-            const availability = free === 0
-                ? `<span class="text-red-400 font-medium">At capacity</span>`
-                : `<span class="text-emerald-400 font-medium">${esc(s.status)}</span> · ${free} ${esc(s.unit)} available`;
-            return `
-            <article data-shelter="${s.id}" class="p-3 rounded-xl hover:bg-[#202227] transition cursor-pointer flex items-start justify-between group">
-                <div class="flex items-start space-x-3">
-                    <span class="w-5 h-5 rounded-full bg-zinc-800/80 text-zinc-300 text-[11px] font-semibold flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span>
-                    <div class="space-y-1">
-                        <h2 class="text-sm font-semibold text-zinc-100 group-hover:text-brand-orange transition-colors">${esc(s.name)}</h2>
-                        <div class="flex items-center text-xs space-x-1 text-zinc-400"><span class="font-bold text-zinc-200">${s.rating}</span><span class="text-amber-500">★★★★★</span><span>(${s.reviews}) · ${esc(s.kind)}</span></div>
-                        <p class="text-xs text-zinc-400">${availability}</p>
-                        <p class="text-[11px] text-zinc-500 truncate max-w-[210px]">${esc(s.address)}</p>
-                    </div>
-                </div>
-                <div class="w-14 h-14 rounded-xl bg-[#2e1d15] border border-amber-900/30 flex items-center justify-center shrink-0 text-brand-orange shadow-inner">
-                    <svg class="w-7 h-7 stroke-[1.6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="${s.icon}" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                </div>
-            </article>`;
-        }).join("");
-
-        document.getElementById("shelter-total").textContent = `${SHELTERS.length} shelters`;
-        const full = SHELTERS.filter((s) => available(store[s.id]) === 0).length;
-        document.getElementById("shelter-full-count").textContent = `${full} at capacity · Filter`;
-    }
-
-    listEl.addEventListener("click", (e) => {
-        const card = e.target.closest("[data-shelter]");
-        if (card) select(card.dataset.shelter);
-    });
-
-    // ---------- Detail panel (the occupancy log for ONE shelter) ----------
-    const btn = "flex-1 py-3 rounded-lg text-white text-sm font-semibold transition";
-    const field = "bg-[#202227] border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-orange focus:border-brand-orange";
-    const small = "text-xs px-2.5 py-1 rounded-md bg-[#202227] border border-zinc-800 text-zinc-300 hover:border-zinc-600";
-
-    function renderDetailShell(id) {
-        const s = byId(id);
-        detailEl.innerHTML = `
-            <button id="d-back" class="text-xs text-zinc-400 hover:text-white mb-3">← All shelters</button>
-            <h2 class="text-base font-semibold text-white leading-tight">${esc(s.name)}</h2>
-            <p class="text-[11px] text-zinc-500 mb-4">${esc(s.address)}</p>
-
-            <section class="rounded-xl bg-brand-card border border-brand-border p-4 mb-3">
-                <div id="d-count" class="text-5xl font-bold text-white leading-none"></div>
-                <div class="text-xs text-zinc-400 mt-1">people currently checked in</div>
-                <div class="h-2.5 bg-zinc-800 rounded-full my-3 overflow-hidden"><div id="d-bar" class="h-full transition-all duration-300"></div></div>
-                <div class="text-xs text-zinc-300 flex items-center gap-2 flex-wrap">
-                    <span id="d-available"></span> of
-                    <input id="d-capacity" type="number" min="0" aria-label="Capacity" class="w-20 px-2 py-1 text-xs ${field}">
-                    total
-                </div>
-            </section>
-
-            <section class="rounded-xl bg-brand-card border border-brand-border p-4 mb-3">
-                <input id="d-note" type="text" placeholder="Optional note (e.g. 'family of 3', 'walk-in')" class="w-full px-3 py-2 mb-3 text-xs ${field}">
-                <div class="flex gap-2">
-                    <button data-act="in1" class="${btn} bg-emerald-600 hover:bg-emerald-500">+ Check in 1</button>
-                    <button data-act="out1" class="${btn} bg-red-600 hover:bg-red-500">− Check out 1</button>
-                </div>
-                <div class="flex gap-2 mt-2">
-                    <input id="d-amount" type="number" min="1" inputmode="numeric" placeholder="Number" aria-label="Number of people" class="w-24 px-3 text-sm ${field}">
-                    <button data-act="inN" class="${btn} bg-emerald-600 hover:bg-emerald-500">Check in <span class="d-amt">#</span></button>
-                    <button data-act="outN" class="${btn} bg-red-600 hover:bg-red-500">Check out <span class="d-amt">#</span></button>
-                </div>
-                <p id="d-today" class="text-[11px] text-zinc-400 mt-3"></p>
-            </section>
-
-            <section class="rounded-xl bg-brand-card border border-brand-border p-4">
-                <div class="flex items-center gap-2 mb-2">
-                    <h3 class="flex-1 text-sm font-semibold text-white">Activity log</h3>
-                    <button id="d-export" class="${small}">Export CSV</button>
-                    <button id="d-reset" class="${small}">Reset</button>
-                </div>
-                <div id="d-log"></div>
-            </section>`;
-
-        const noteEl = detailEl.querySelector("#d-note");
-        const amountEl = detailEl.querySelector("#d-amount");
-
-        function logAmount(type) {
-            const n = parseInt(amountEl.value, 10);
-            if (!n || n < 1) { window.alert("Enter a number of 1 or more."); return; }
-            const count = store[id].count;
-            if (type === "out" && n > count &&
-                !window.confirm(`Only ${count} people are checked in. Check out ${n} anyway? The count will stop at 0.`)) return;
-            logChange(id, type, n, noteEl.value);
-            noteEl.value = "";
-            amountEl.value = "";
-            updateAmountLabels();
-        }
-        function updateAmountLabels() {
-            detailEl.querySelectorAll(".d-amt").forEach((el) => (el.textContent = amountEl.value || "#"));
-        }
-
-        detailEl.querySelector("#d-back").onclick = () => select(null);
-        detailEl.querySelector("[data-act=in1]").onclick = () => { logChange(id, "in", 1, noteEl.value); noteEl.value = ""; };
-        detailEl.querySelector("[data-act=out1]").onclick = () => { logChange(id, "out", 1, noteEl.value); noteEl.value = ""; };
-        detailEl.querySelector("[data-act=inN]").onclick = () => logAmount("in");
-        detailEl.querySelector("[data-act=outN]").onclick = () => logAmount("out");
-        amountEl.addEventListener("input", updateAmountLabels);
-        amountEl.addEventListener("keydown", (e) => { if (e.key === "Enter") logAmount("in"); });
-        // "change" fires on blur/Enter, so typing doesn't get interrupted
-        detailEl.querySelector("#d-capacity").addEventListener("change", (e) => setCapacity(id, e.target.value));
-        detailEl.querySelector("#d-export").onclick = () => exportCSV(id);
-        detailEl.querySelector("#d-reset").onclick = () => resetShelter(id);
-    }
-
-    function updateDetail() {
-        if (!selectedId) return;
-        const s = byId(selectedId);
-        const log = store[selectedId];
-        const percent = log.capacity ? Math.min(100, (log.count / log.capacity) * 100) : 0;
-        const barColor = percent >= 100 ? "#c0392b" : percent >= 85 ? "#e67e22" : "#27ae60";
-
-        detailEl.querySelector("#d-count").textContent = log.count;
-        const bar = detailEl.querySelector("#d-bar");
-        bar.style.width = `${percent}%`;
-        bar.style.background = barColor;
-        detailEl.querySelector("#d-available").textContent = `${available(log)} ${s.unit} available`;
-        const capEl = detailEl.querySelector("#d-capacity");
-        if (document.activeElement !== capEl) capEl.value = log.capacity;
-
-        const today = new Date().toDateString();
-        const todays = log.entries.filter((e) => new Date(e.time).toDateString() === today);
-        const sum = (t) => todays.filter((e) => e.type === t).reduce((a, e) => a + e.amount, 0);
-        detailEl.querySelector("#d-today").textContent = `Today: ${sum("in")} in · ${sum("out")} out`;
-
-        detailEl.querySelector("#d-log").innerHTML = log.entries.length === 0
-            ? `<p class="text-xs text-zinc-500">No entries yet.</p>`
-            : `<table class="w-full text-xs text-left">
-                 <thead class="text-zinc-500"><tr><th class="py-1 font-medium">Time</th><th class="font-medium">Change</th><th class="font-medium">After</th><th class="font-medium">Note</th></tr></thead>
-                 <tbody class="text-zinc-300">${log.entries.map((e) => `
-                   <tr class="border-t border-brand-border/60">
-                     <td class="py-1.5 pr-2">${esc(new Date(e.time).toLocaleString())}</td>
-                     <td class="${e.type === "in" ? "text-emerald-400" : "text-red-400"}">${e.type === "in" ? "+" : "−"}${e.amount}</td>
-                     <td>${e.countAfter}</td>
-                     <td class="text-zinc-400">${esc(e.note)}</td>
-                   </tr>`).join("")}
-                 </tbody>
-               </table>`;
-    }
-
-    // ---------- Map pins ----------
-    // Pin N on the map selects SHELTERS[N-1]; pins with no matching shelter do nothing.
-    const pins = [...document.querySelectorAll(".map-pin")].map((pin) => {
-        const n = parseInt(pin.textContent.trim(), 10);
-        const shelter = SHELTERS[n - 1];
-        if (shelter) {
-            pin.dataset.shelter = shelter.id;
-            pin.addEventListener("click", () => select(shelter.id));
-        }
-        return pin;
-    });
-
-    function highlightPins() {
-        for (const pin of pins) {
-            const on = pin.dataset.shelter && pin.dataset.shelter === selectedId;
-            pin.firstElementChild.firstElementChild.classList.toggle("ring-2", on);
-            pin.firstElementChild.firstElementChild.classList.toggle("ring-white", on);
-            pin.style.zIndex = on ? 45 : "";
-        }
-    }
-
-    // ---------- Selection + refresh ----------
-    function select(id) {
-        selectedId = id;
-        listEl.classList.toggle("hidden", !!id);
-        detailEl.classList.toggle("hidden", !id);
-        if (id) renderDetailShell(id);
-        refresh();
-    }
-
-    function refresh() {
-        renderList();
-        updateDetail();
-        highlightPins();
-    }
-
-    refresh();
-})();
-</script>
-<!-- END: Shelter Occupancy Log -->
-</body></html>
+</div></main><footer class="w-full bg-surface-container-lowest text-on-surface-variant shadow-[0_-1px_16px_rgba(0,0,0,0.4)]"><div class="w-full bg-surface-container-low/90 px-gutter md:px-margin py-space-md shadow-[0_1px_0_0_rgba(255,255,255,0.05)]"><div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><div class="w-9 h-9 rounded-full bg-tertiary-container flex items-center justify-center"><span class="material-symbols-outlined text-tertiary text-[20px]">emergency</span></div><div><p class="font-title-md text-title-md text-on-surface font-bold">24/7 Immediate Crisis Navigation &amp; Transport</p><p class="font-body-sm text-body-sm text-on-surface-variant">Free, confidential shelter placement &amp; rapid civic transport coordination across 48 metropolitan corridors.</p></div></div><div class="flex items-center gap-space-sm flex-wrap"><a class="px-space-md py-1.5 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-variant hover:text-on-surface transition-all" href="tel:211">Dial 211 (Housing)</a><a class="px-space-md py-1.5 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-variant hover:text-on-surface transition-all" href="tel:988">Dial 988 (Crisis)</a><span class="px-space-sm py-1 rounded-full bg-surface-container font-label-sm text-label-sm text-secondary font-bold tracking-wider uppercase">Encrypted Dispatch</span></div></div></div><div class="max-w-7xl mx-auto px-gutter md:px-margin py-space-xl"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-space-lg mb-space-xl"><div class="lg:col-span-2 flex flex-col gap-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-[18px]">radar</span></div><span class="font-headline-sm text-headline-sm text-on-surface font-bold">HavenTransit</span></div><p class="font-body-md text-body-md text-on-surface-variant max-w-sm">Operating nocturnal crisis-command infrastructure uniting municipality beds, compassionate community drivers, and unhoused neighbors through low-friction dignity relays.</p><div class="flex items-center gap-space-sm pt-space-xs"><span class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-high font-label-sm text-label-sm text-secondary"><span class="material-symbols-outlined text-[14px]">verified_user</span>Community Trust Verified</span><span class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-high font-label-sm text-label-sm text-on-surface"><span class="material-symbols-outlined text-[14px]">shield</span>501(c)(3) Nonprofit</span></div></div><div class="flex flex-col gap-space-sm"><span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Direct Aid</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="find-shelter" href="#">Emergency Bed Map</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="request-ride-stay" href="#">Book Safe Passage</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="cooling-warming-stations" href="#">Weather Warming Zones</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="accessibility-aid" href="#">ADA Accommodated Transit</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Operators</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="volunteer-drivers" href="#">Driver Requirements</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="for-shelters" href="#">Shelter Capacity API</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="dispatch-telemetry" href="#">Relay Routing Protocol</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="partner-portal" href="#">Municipal Agency Ingest</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Governance</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="partners-impact" href="#">Audited Bed Census</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="privacy-security" href="#">Zero-Trace Passenger Privacy</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="civilian-safety" href="#">Vetted Escort Standards</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="donate" href="#">Direct Mutual Aid Fund</a></div></div><div class="pt-space-md border-t-0 flex flex-col sm:flex-row items-center justify-between gap-space-sm"><p class="font-body-sm text-body-sm text-on-surface-variant">© 2025 HavenTransit Sanctuary Network. Open civic humanitarian infrastructure.</p><div class="flex items-center gap-space-md"><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="privacy-security" href="#">Privacy Policy</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="terms-service" href="#">Terms of Transit</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="transparency" href="#">Civic Transparency</a></div></div></div></footer></body></html>
