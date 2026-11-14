@@ -65,7 +65,7 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(ride.status, "PENDING")
             self.assertIsNotNone(datetime.fromisoformat(ride.created_at).tzinfo)
             self.assertFalse(driver.is_available)
-            self.assertFalse(driver.is_verified)
+            self.assertTrue(driver.is_verified)
             self.assertEqual(driver.phone_number, "001-555-0101")
 
     def test_shelter_and_driver_constraints(self):

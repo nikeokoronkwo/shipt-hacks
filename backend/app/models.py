@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Index, Integer, REAL, Text, UniqueConstraint, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -61,8 +61,10 @@ class Driver(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     auth_user_id: Mapped[str] = mapped_column(Text, unique=True)
     phone_number: Mapped[str] = mapped_column(Text)
-    is_verified: Mapped[bool] = mapped_column(Boolean(create_constraint=True), server_default=text("0"))
+    is_verified: Mapped[bool] = mapped_column(Boolean(create_constraint=True), default=True, server_default=text("1"))
     is_available: Mapped[bool] = mapped_column(Boolean(create_constraint=True), server_default=text("0"))
+    sms_opted_in: Mapped[bool] = mapped_column(Boolean(create_constraint=True), server_default=text("0"))
+    vehicle: Mapped["Car | None"] = relationship("Car", uselist=False)
 
 
 class Car(Base):
