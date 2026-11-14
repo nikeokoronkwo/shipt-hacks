@@ -1,6 +1,6 @@
-# ShelterConnect
+# Hermes
 
-ShelterConnect is one local system with two runtimes:
+Hermes is one local system with two runtimes:
 
 ```text
 Browser ── Better Auth session ──► Next.js :3000 (/api/auth/*)
