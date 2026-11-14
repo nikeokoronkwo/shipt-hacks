@@ -1,0 +1,10 @@
+[project]
+name = "shelterconnect-backend"
+version = "0.1.0"
+description = "ShelterConnect FastAPI backend starter"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "sqlalchemy>=2.0,<3",
+    "uvicorn[standard]>=0.30,<1",
+]
