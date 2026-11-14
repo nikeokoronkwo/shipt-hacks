@@ -1,4 +1,4 @@
-"""SQLite connection setup shared by future application models and routes."""
+"""SQLite connection setup shared by application models and routes."""
 
 import os
 from collections.abc import Generator
@@ -37,6 +37,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    # Establish the SQLite file and connection settings; no tables are defined yet.
-    with engine.connect():
-        pass
+    # Register application models before creating missing tables. Auth owns its schema.
+    from app import models  # noqa: F401
+
+    Base.metadata.create_all(bind=engine)
