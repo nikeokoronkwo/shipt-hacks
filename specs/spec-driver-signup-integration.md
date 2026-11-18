@@ -3,7 +3,7 @@ title: Make driver registration recoverable across auth and the API
 type: bugfix
 created: 2026-11-14
 updated: 2026-11-18
-status: in-review
+status: done
 baseline_commit: 387dcbb
 context: []
 ---
@@ -55,7 +55,7 @@ context: []
 - [x] Await SMS delivery and protect returning users' saved display names.
 - [x] Add active-backend and full-stack browser regression tests.
 - [x] Run final checks and review the implementation against the current-main contract.
-- [ ] Commit, push, create the fresh PR, and verify its remote state.
+- [x] Commit, push, create the fresh PR, and verify its remote state.
 
 **Acceptance Criteria:**
 - Given a visitor, when they follow homepage signup and save their account and vehicle details, then one driver profile persists and the live dashboard displays it offline.
@@ -101,3 +101,12 @@ context: []
   [driver-signup.spec.ts:70](../frontend/tests/driver-signup.spec.ts#L70)
   [playwright.config.ts:7](../frontend/playwright.config.ts#L7)
   [test_driver_signup.py:1](../backend/tests/test_driver_signup.py#L1)
+
+## Delivery
+
+Published [PR #9](https://github.com/nikeokoronkwo/shipt-hacks/pull/9) from
+`fix/driver-signup-integration` to `main`. GitHub verified it is open, non-draft,
+and mergeable. Implementation commit `dbf7194` contains the tested source;
+the follow-up delivery record changes only this document. No repository CI
+checks are configured on the PR; the local validation results above are the
+verification evidence.
