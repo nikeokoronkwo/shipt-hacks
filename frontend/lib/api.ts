@@ -38,6 +38,13 @@ export type DriverProfile = {
 
 type ApiOptions = RequestInit & { authenticated?: boolean };
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { authenticated = false, headers, ...request } = options;
   const requestHeaders = new Headers(headers);
@@ -64,7 +71,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
       detail?: string | { msg: string; loc?: (string | number)[] }[];
     } | null;
     const detail = body?.detail;
-    throw new Error(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map(item => `${item.loc?.slice(1).join(".") || "Request"}: ${item.msg}`).join("; ") : `Request failed (${response.status}).`);
+    throw new ApiError(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map(item => `${item.loc?.slice(1).join(".") || "Request"}: ${item.msg}`).join("; ") : `Request failed (${response.status}).`, response.status);
   }
   return response.json() as Promise<T>;
 }

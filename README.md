@@ -133,14 +133,9 @@ then run `pnpm auth:bootstrap-admin`. Passwords must be at least 12 characters.
 
 ## How the website works
 
-The site has two parts. Know which one you are on:
-
-| Part | Where | Data |
-| --- | --- | --- |
-| **Wayfinder design preview** | Every page except `/access` | Sample data built into the frontend. Nothing is sent to the API or saved. |
-| **Service portal** | `/access` | Live. Reads and writes through the FastAPI backend and Better Auth. |
-
-A banner at the top of every preview page links to the service portal.
+Shelter search, pickup requests, ride tracking, and driver pages connect to
+FastAPI and Better Auth. Driver signup and sign-in save real local accounts
+and profiles. Shelter registration and feedback remain design previews.
 
 ### Pages
 
@@ -150,8 +145,8 @@ A banner at the top of every preview page links to the service portal.
 | Find shelter | `/find-shelter` | Search, filter (pet friendly, ADA accessible, women only, family units), sort by distance or beds, list and map views. |
 | Shelter details | `/shelter-details/[id]` | Intake hours, who it serves, bed count, map, and a demo ride request form. |
 | Track ride | `/track-ride` | Shows the demo ride's status. A button steps through the statuses by hand. |
-| Become a driver | `/become-a-driver` | Preview of the volunteer driver application form. |
-| Driver dashboard | `/driver-profile` | Preview of a driver's dashboard: availability toggle, SMS opt-in, sample requests. |
+| Become a driver | `/become-a-driver` | Live account creation and resumable phone/vehicle profile setup. |
+| Driver dashboard | `/driver-profile` | Live profile, availability, SMS preferences, and ride requests. |
 | Driver request | `/driver/requests/123` | Preview of accepting, starting, and completing a ride. |
 | Register a shelter | `/shelter-registration` | Preview of the shelter onboarding form. |
 | Feedback | `/submit-feedback` | Preview of the feedback form. |
@@ -184,23 +179,34 @@ bed is not a reservation or a guarantee of admission.
 
 ### For a volunteer driver
 
-All of this happens in the **Volunteer drivers** section of `/access`.
+1. Follow **Sign up to drive** to `/become-a-driver`. Create an email/password
+   account (12+ characters), or use **Phone by SMS** to verify a phone and sign
+   in. SMS codes expire after five minutes and require working Twilio settings.
+2. Add your phone number and vehicle make, model, color, and license plate.
+   Choose whether to receive new-ride SMS alerts; they default off.
+3. Save the profile and open `/driver-profile`. The current local demo
+   automatically verifies registered drivers and starts them offline. Email
+   registration does not require SMS delivery.
+4. Set yourself online when ready. Update SMS consent from the dashboard;
+   preferences work for email accounts and preserve the registered phone.
 
-1. **Create an account** with email and password (12+ characters), or with a
-   phone number and an SMS code.
-2. **Verify a phone number.** Enter it in international format
-   (`+12055550100`) and type in the 6-digit code. Codes expire after 5 minutes.
-3. **Save the driver profile**, choosing whether to get a text when a new ride
-   is requested. Reply STOP to any text to opt out.
-4. **Wait to be verified.** A super administrator approves the driver through
-   `PATCH /api/admin/drivers/{driver_id}/verification`.
-5. Once verified, the driver can go online, see pending requests, accept one,
-   and move it through In progress to Completed. A driver can hold one active
-   ride at a time, and two drivers cannot accept the same ride.
+If profile setup fails after account creation, the account remains saved.
+Retry **Save driver profile**, or sign in at `/access` and follow **Driver
+account setup** from the dashboard. Revisiting signup resumes an incomplete
+account or recognizes an existing profile without resetting its SMS consent.
 
-Steps 4 and 5 are available through the API today (see
-<http://localhost:8000/docs>) but do not have screens yet. The
-`/driver-profile` page shows the intended design with sample data.
+Signup previously retried account creation after a backend failure, leaving
+users stuck with an already-registered email. The setup steps now use the
+active session and distinguish a missing profile from an unavailable API.
+SMS delivery errors are also returned to the browser instead of claiming a
+code was sent before delivery completed.
+
+Both services must load the same root `.env`. Files in the old `auth/`
+directory are not loaded by Next.js. Keep `BETTER_AUTH_URL`, `AUTH_ISSUER`,
+`AUTH_JWKS_URL`, browser auth URL, and CORS origins aligned on port 3000.
+Missing or rejected Twilio credentials prevent SMS sign-in; email registration
+remains available. Profile verification here is the existing local-demo policy,
+not an identity or background check.
 
 ### For shelter staff and administrators
 
@@ -226,8 +232,9 @@ The browser reads public shelter data and creates public ride requests directly
 from FastAPI. For protected actions, the client asks Better Auth for a
 short-lived JWT, then sends it as a Bearer token to FastAPI. FastAPI verifies it
 using Better Auth's JWKS endpoint; it never reads passwords or session cookies.
-FastAPI accepts a driver's phone number only from the signed, phone-verified
-token.
+FastAPI derives the driver identity from the signed token. Local-demo registration
+accepts phone and vehicle details in the profile request; SMS-only sign-in still
+requires phone verification.
 
 ### One SQLite database, two table owners
 
@@ -270,15 +277,31 @@ claim. FastAPI validates signature, issuer, audience, expiry, and role via
 ## Tests and checks
 
 ```sh
-cd backend && uv run python -m unittest tests.test_auth tests.test_database -v
+cd backend && uv run python -m unittest tests.test_auth tests.test_database tests.test_driver_signup -v
 cd ../frontend && pnpm lint && pnpm typecheck
 ```
 
-The other files in `backend/tests/` and the scripts in `backend/scripts/`
-import an older `app.*` package layout (`app.main`, `app.database`,
+Three legacy test modules (`test_driver_collection.py`,
+`test_driver_workflow.py`, and `test_shelters.py`) and the scripts in
+`backend/scripts/` import an older `app.*` package layout (`app.main`, `app.database`,
 `app.models`) that is not in the repository, so they do not currently run. The
 running API is `backend/main.py` with the `shiptohome` package in
 `backend/src/`.
+
+Run the repeatable full-stack browser checks from `frontend/`:
+
+```sh
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+Stop other services on ports 3000 and 8000 first. Playwright migrates a
+fresh temporary SQLite database and starts real Next.js/Better Auth and
+FastAPI services with aligned JWT/JWKS/CORS settings. It tests signup,
+profile retry/resume, consent and vehicle persistence, SMS verification and
+delivery failures, shelter selection, pickup forms, and navigation. Only SMS
+transport is replaced in the test server; no real SMS or developer database
+is used. OTP captures are removed at teardown.
 
 ## Repository layout
 

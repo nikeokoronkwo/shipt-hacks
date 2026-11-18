@@ -97,10 +97,16 @@ export const auth = betterAuth({
       requireVerification: true,
       phoneNumberValidator: (phoneNumber) => /^\+[1-9]\d{7,14}$/.test(phoneNumber),
       sendOTP: async ({ phoneNumber: to, code }) => {
-        await sendSms({
-          to,
-          body: `Your ShelterConnect verification code is ${code}. It expires in 5 minutes. Don't share it. Reply STOP to stop all ShelterConnect texts.`,
-        });
+        try {
+          await sendSms({
+            to,
+            body: `Your ShelterConnect verification code is ${code}. It expires in 5 minutes. Don't share it. Reply STOP to stop all ShelterConnect texts.`,
+          });
+        } catch {
+          throw new APIError("SERVICE_UNAVAILABLE", {
+            message: "We couldn't send your verification code. Please try again shortly.",
+          });
+        }
       },
       signUpOnVerification: {
         getTempEmail: (phoneNumber) => {
@@ -136,15 +142,8 @@ export const auth = betterAuth({
       "/phone-number/send-otp": { window: 60, max: 3 },
     },
   },
-  advanced: {
-    backgroundTasks: {
-      handler: (promise) => {
-        void promise.catch(() => {
-          // Better Auth already logs the delivery error. Never log the OTP.
-        });
-      },
-    },
-  },
+  // Await OTP delivery so a missing/rejected SMS provider is an error rather
+  // than a successful "code sent" response with no message on the way.
   databaseHooks: {
     user: {
       create: {
@@ -158,6 +157,14 @@ export const auth = betterAuth({
             data: {
               ...user,
               role: "driver",
+              // Phone verification also signs existing users in. Apply the
+              // optional signup name only while creating a new account.
+              ...(context?.path === "/phone-number/verify" &&
+              typeof context.body?.name === "string" &&
+              context.body.name.trim().length > 0 &&
+              context.body.name.trim().length <= 100
+                ? { name: context.body.name.trim() }
+                : {}),
             },
           };
         },
