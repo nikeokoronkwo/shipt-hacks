@@ -274,9 +274,9 @@ def update_my_driver(
     user: CurrentUser = Depends(require_role("driver")),
 ) -> Driver:
     driver = get_driver_or_404(db, user.id)
-    if not user.phone_number or not user.phone_number_verified:
-        raise HTTPException(status_code=403, detail="Verify your phone number before updating driver settings.")
-    driver.phone_number = user.phone_number
+    # Registration accepts contact details without SMS verification in this
+    # local demo. Changing alert consent must work for those email accounts and
+    # must not replace the registered contact from unrelated JWT claims.
     driver.sms_notifications_enabled = payload.sms_notifications_enabled
     db.commit()
     db.refresh(driver)

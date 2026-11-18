@@ -48,7 +48,7 @@ export function DriverDashboard() {
   return <section className="container-wide max-w-4xl space-y-6 py-12"><h1 className="page-title">Volunteer driver dashboard</h1>
     {isPending ? <p>Loading session…</p> : !session ? <Link className="text-accent" href="/access#driver-access">Sign in or register to drive →</Link> : <>
       <p>Welcome, {session.user.name}. <button className="text-accent underline" onClick={() => authClient.signOut()}>Sign out</button></p>
-      {error && <p role="alert" className="text-gold">{error} <Link href="/access#driver-access" className="underline">Driver account setup</Link></p>}
+      {error && <p role="alert" className="text-gold">{error} <Link href="/become-a-driver" className="underline">Driver account setup</Link></p>}
       {!ready ? <p role="status">Loading driver profile…</p> : profile && <>
         <div className="panel space-y-5 p-6"><p>{profile.is_verified ? "Verified driver" : "Awaiting administrator verification"} · {profile.phone_number}</p>
           <label className="flex gap-3"><input type="checkbox" disabled={busy || !profile.is_verified || !!activeRide} checked={profile.is_available} onChange={e => change("availability", e.target.checked)} />Online · Accepting requests</label>

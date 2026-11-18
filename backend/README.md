@@ -25,8 +25,11 @@ FastAPI creates only application tables and seeds the fictional Birmingham
 shelters on first launch. Better Auth owns the auth tables and their migrations.
 Never alter those tables through SQLAlchemy.
 
-Run the backend JWT and SQLite checks from `backend/`:
+Run the active backend JWT, SQLite, and driver signup checks from `backend/`:
 
 ```sh
-uv run python -m unittest discover -s tests -v
+uv run python -m unittest tests.test_auth tests.test_database tests.test_driver_signup -v
 ```
+
+See the root [verification notes](../README.md#tests-and-checks) for full-stack
+browser checks and the pre-existing legacy test import failures.
